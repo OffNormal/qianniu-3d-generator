@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.infrastructure.persistent.dao.IGenerationTaskDao">
+
+    <resultMap id="GenerationTaskMap" type="org.example.infrastructure.persistent.po.GenerationTaskPO">
+        <id column="task_id" property="taskId"/>
+        <result column="user_id" property="userId"/>
+        <result column="generation_type" property="generationType"/>
+        <result column="input_content" property="inputContent"/>
+        <result column="input_hash" property="inputHash"/>
+        <result column="status" property="status"/>
+        <result column="result_url" property="resultUrl"/>
+        <result column="model_file_path" property="modelFilePath"/>
+        <result column="preview_image_url" property="previewImageUrl"/>
+        <result column="external_task_id" property="externalTaskId"/>
+        <result column="generation_params" property="generationParams"/>
+        <result column="quality_score" property="qualityScore"/>
+        <result column="user_rating" property="userRating"/>
+        <result column="processing_time" property="processingTime"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="from_cache" property="fromCache"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="complete_time" property="completeTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="org.example.infrastructure.persistent.po.GenerationTaskPO">
+        INSERT INTO generation_task(
+            task_id, user_id, generation_type, input_content, input_hash, 
+            status, result_url, model_file_path, preview_image_url, external_task_id,
+            generation_params, quality_score, user_rating, processing_time, error_message,
+            from_cache, create_time, update_time, complete_time
+        ) VALUES(
+            #{taskId}, #{userId}, #{generationType}, #{inputContent}, #{inputHash},
+            #{status}, #{resultUrl}, #{modelFilePath}, #{previewImageUrl}, #{externalTaskId},
+            #{generationParams}, #{qualityScore}, #{userRating}, #{processingTime}, #{errorMessage},
+            #{fromCache}, #{createTime}, #{updateTime}, #{completeTime}
+        )
+    </insert>
+
+    <update id="update" parameterType="org.example.infrastructure.persistent.po.GenerationTaskPO">
+        UPDATE generation_task SET 
+            status = #{status},
+            result_url = #{resultUrl},
+            model_file_path = #{modelFilePath},
+            preview_image_url = #{previewImageUrl},
+            external_task_id = #{externalTaskId},
+            generation_params = #{generationParams},
+            quality_score = #{qualityScore},
+            user_rating = #{userRating},
+            processing_time = #{processingTime},
+            error_message = #{errorMessage},
+            from_cache = #{fromCache},
+            update_time = #{updateTime},
+            complete_time = #{completeTime}
+        WHERE task_id = #{taskId}
+    </update>
+
+    <select id="selectByTaskId" parameterType="java.lang.String" resultMap="GenerationTaskMap">
+        SELECT task_id, user_id, generation_type, input_content, input_hash,
+               status, result_url, model_file_path, preview_image_url, external_task_id,
+               generation_params, quality_score, user_rating, processing_time, error_message,
+               from_cache, create_time, update_time, complete_time
+        FROM generation_task
+        WHERE task_id = #{taskId}
+    </select>
+
+    <select id="selectByUserId" resultMap="GenerationTaskMap">
+        SELECT task_id, user_id, generation_type, input_content, input_hash,
+               status, result_url, model_file_path, preview_image_url, external_task_id,
+               generation_params, quality_score, user_rating, processing_time, error_message,
+               from_cache, create_time, update_time, complete_time
+        FROM generation_task
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectByInputHash" parameterType="java.lang.String" resultMap="GenerationTaskMap">
+        SELECT task_id, user_id, generation_type, input_content, input_hash,
+               status, result_url, model_file_path, preview_image_url, external_task_id,
+               generation_params, quality_score, user_rating, processing_time, error_message,
+               from_cache, create_time, update_time, complete_time
+        FROM generation_task
+        WHERE input_hash = #{inputHash}
+        AND status = 'COMPLETED'
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectSimilarCompletedTasks" resultMap="GenerationTaskMap">
+        SELECT task_id, user_id, generation_type, input_content, input_hash,
+               status, result_url, model_file_path, preview_image_url, external_task_id,
+               generation_params, quality_score, user_rating, processing_time, error_message,
+               from_cache, create_time, update_time, complete_time
+        FROM generation_task
+        WHERE input_content LIKE CONCAT('%', #{inputContent}, '%')
+        AND status = 'COMPLETED'
+        ORDER BY create_time DESC
+        LIMIT 10
+    </select>
+
+    <select id="countByUserId" parameterType="java.lang.String" resultType="int">
+        SELECT COUNT(*)
+        FROM generation_task
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="selectQualityStatistics" resultMap="GenerationTaskMap">
+        SELECT task_id, user_id, generation_type, input_content, input_hash,
+               status, result_url, model_file_path, preview_image_url, external_task_id,
+               generation_params, quality_score, user_rating, processing_time, error_message,
+               from_cache, create_time, update_time, complete_time
+        FROM generation_task
+        WHERE user_id = #{userId}
+        AND status = 'COMPLETED'
+        AND create_time >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>

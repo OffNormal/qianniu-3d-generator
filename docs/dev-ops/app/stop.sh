@@ -1,0 +1,1 @@
+docker stop qiniu-3d-generator
