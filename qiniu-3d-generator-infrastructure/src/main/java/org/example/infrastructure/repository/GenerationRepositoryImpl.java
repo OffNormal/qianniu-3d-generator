@@ -77,6 +77,7 @@ public class GenerationRepositoryImpl implements IGenerationRepository {
                 .modelFilePath(entity.getModelFilePath())
                 .previewImageUrl(entity.getPreviewImageUrl())
                 .externalTaskId(entity.getExternalTaskId())
+                .apiProvider(entity.getApiProvider())
                 .generationParams(entity.getGenerationParams())
                 .qualityScore(entity.getQualityScore())
                 .userRating(entity.getUserRating())
@@ -104,6 +105,7 @@ public class GenerationRepositoryImpl implements IGenerationRepository {
         entity.setModelFilePath(po.getModelFilePath());
         entity.setPreviewImageUrl(po.getPreviewImageUrl());
         entity.setExternalTaskId(po.getExternalTaskId());
+        entity.setApiProvider(po.getApiProvider());
         entity.setGenerationParams(po.getGenerationParams());
         entity.setQualityScore(po.getQualityScore());
         entity.setUserRating(po.getUserRating());

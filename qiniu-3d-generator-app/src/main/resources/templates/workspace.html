@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D模型生成工作台 - 七牛云3D Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="/css/responsive.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        /* 导航栏 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        
+        .logo-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+        
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 主内容区域 */
+        .main-content {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            min-height: calc(100vh - 120px);
+        }
+        
+        /* 工作区域 */
+        .workspace {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .workspace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .workspace-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .mode-toggle {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 4px;
+        }
+        
+        .mode-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* 输入区域 */
+        .input-section {
+            margin-bottom: 2rem;
+        }
+        
+        .input-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .text-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+        
+        .text-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .file-upload {
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .file-upload:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .file-upload.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .upload-text {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        
+        .upload-hint {
+            font-size: 0.9rem;
+            color: #999;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+        
+        /* 参数设置 */
+        .params-section {
+            margin-bottom: 2rem;
+        }
+        
+        .params-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .param-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .param-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+        
+        .param-input {
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .param-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        /* 生成按钮 */
+        .generate-section {
+            text-align: center;
+        }
+        
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+        
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .sidebar-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* 进度显示 */
+        .progress-container {
+            margin-bottom: 1rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+            text-align: center;
+        }
+        
+        /* 结果预览 */
+        .result-preview {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            color: #999;
+        }
+        
+        .result-preview.has-result {
+            border-color: #667eea;
+            background: white;
+        }
+        
+        .result-model {
+            width: 100%;
+            height: 300px;
+            border-radius: 12px;
+        }
+        
+        /* 历史记录 */
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .history-item:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .history-thumbnail {
+            width: 60px;
+            height: 60px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+        
+        .history-info {
+            flex: 1;
+        }
+        
+        .history-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: #333;
+        }
+        
+        .history-time {
+            font-size: 0.8rem;
+            color: #999;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 0 1rem;
+            }
+            
+            .main-content {
+                padding: 0 1rem;
+                margin: 1rem auto;
+            }
+            
+            .workspace {
+                padding: 1.5rem;
+            }
+            
+            .params-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 隐藏类 */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo-nav">
+                <div class="logo-icon">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <span>3D Generator</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/workspace" class="active">工作台</a></li>
+                <li><a href="/history">历史记录</a></li>
+                <li><a href="/profile">用户中心</a></li>
+                <li><a href="/api-docs">API文档</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <!-- 主工作区域 -->
+        <div class="workspace">
+            <div class="workspace-header">
+                <h1 class="workspace-title">3D模型生成工作台</h1>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" data-mode="text">
+                        <i class="fas fa-pen-fancy"></i> 文本生成
+                    </button>
+                    <button class="mode-btn" data-mode="image">
+                        <i class="fas fa-image"></i> 图片生成
+                    </button>
+                </div>
+            </div>
+
+            <!-- 文本输入模式 -->
+            <div id="text-mode" class="input-mode">
+                <div class="input-section">
+                    <label class="input-label">
+                        <i class="fas fa-edit"></i> 描述您想要生成的3D模型
+                    </label>
+                    <textarea 
+                        class="text-input" 
+                        id="textPrompt"
+                        placeholder="例如：一只可爱的卡通猫咪，坐着的姿势，橙色毛发，大眼睛，适合3D打印..."
+                    ></textarea>
+                </div>
+            </div>
+
+            <!-- 图片上传模式 -->
+            <div id="image-mode" class="input-mode hidden">
+                <div class="input-section">
+                    <label class="input-label">
+                        <i class="fas fa-upload"></i> 上传图片文件
+                    </label>
+                    <div class="file-upload" id="fileUpload">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="upload-text">点击或拖拽图片到此处</div>
+                        <div class="upload-hint">支持 JPG, PNG, GIF 格式，最大 10MB</div>
+                        <input type="file" class="file-input" id="imageFile" accept="image/*">
+                    </div>
+                    <img id="previewImage" class="preview-image hidden" alt="预览图片">
+                </div>
+            </div>
+
+            <!-- 参数设置 -->
+            <div class="params-section">
+                <label class="input-label">
+                    <i class="fas fa-cog"></i> 生成参数
+                </label>
+                <div class="params-grid">
+                    <div class="param-group">
+                        <label class="param-label">质量等级</label>
+                        <select class="param-input" id="quality">
+                            <option value="draft">草图 (快速)</option>
+                            <option value="standard" selected>标准 (推荐)</option>
+                            <option value="high">高质量 (较慢)</option>
+                        </select>
+                    </div>
+                    <div class="param-group">
+                        <label class="param-label">模型风格</label>
+                        <select class="param-input" id="style">
+                            <option value="realistic">写实风格</option>
+                            <option value="cartoon" selected>卡通风格</option>
+                            <option value="lowpoly">低面数</option>
+                            <option value="stylized">风格化</option>
+                        </select>
+                    </div>
+                    <div class="param-group">
+                        <label class="param-label">输出格式</label>
+                        <select class="param-input" id="format">
+                            <option value="obj" selected>OBJ</option>
+                            <option value="fbx">FBX</option>
+                            <option value="gltf">GLTF</option>
+                            <option value="stl">STL</option>
+                        </select>
+                    </div>
+                    <div class="param-group">
+                        <label class="param-label">面数限制</label>
+                        <select class="param-input" id="polyCount">
+                            <option value="low">低 (< 5K)</option>
+                            <option value="medium" selected>中 (5K-20K)</option>
+                            <option value="high">高 (20K-50K)</option>
+                            <option value="ultra">超高 (> 50K)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生成按钮 -->
+            <div class="generate-section">
+                <button class="generate-btn" id="generateBtn">
+                    <i class="fas fa-magic"></i>
+                    开始生成3D模型
+                </button>
+            </div>
+        </div>
+
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <!-- 生成进度 -->
+            <div class="sidebar-card">
+                <h3 class="card-title">
+                    <i class="fas fa-tasks"></i>
+                    生成进度
+                </h3>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">等待开始...</div>
+                </div>
+            </div>
+
+            <!-- 结果预览 -->
+            <div class="sidebar-card">
+                <h3 class="card-title">
+                    <i class="fas fa-eye"></i>
+                    结果预览
+                </h3>
+                <div class="result-preview" id="resultPreview">
+                    <i class="fas fa-cube" style="font-size: 3rem;"></i>
+                    <div style="margin-left: 1rem;">
+                        <div>3D模型将在这里显示</div>
+                        <div style="font-size: 0.8rem; margin-top: 0.5rem;">支持旋转、缩放查看</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 最近生成 -->
+            <div class="sidebar-card">
+                <h3 class="card-title">
+                    <i class="fas fa-history"></i>
+                    最近生成
+                </h3>
+                <div id="recentHistory">
+                    <div class="history-item">
+                        <div class="history-thumbnail">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        <div class="history-info">
+                            <div class="history-title">卡通猫咪模型</div>
+                            <div class="history-time">2小时前</div>
+                        </div>
+                    </div>
+                    <div class="history-item">
+                        <div class="history-thumbnail">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        <div class="history-info">
+                            <div class="history-title">现代椅子设计</div>
+                            <div class="history-time">1天前</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模式切换
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 更新按钮状态
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // 切换输入模式
+                const mode = btn.dataset.mode;
+                document.querySelectorAll('.input-mode').forEach(m => m.classList.add('hidden'));
+                document.getElementById(mode + '-mode').classList.remove('hidden');
+            });
+        });
+
+        // 文件上传处理
+        const fileUpload = document.getElementById('fileUpload');
+        const fileInput = document.getElementById('imageFile');
+        const previewImage = document.getElementById('previewImage');
+
+        fileUpload.addEventListener('click', () => fileInput.click());
+        
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+        
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('dragover');
+        });
+        
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImage.src = e.target.result;
+                    previewImage.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 生成按钮处理
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('generateBtn');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            // 获取当前模式
+            const activeMode = document.querySelector('.mode-btn.active').dataset.mode;
+            
+            // 获取输入内容
+            let inputData = {};
+            if (activeMode === 'text') {
+                const prompt = document.getElementById('textPrompt').value.trim();
+                if (!prompt) {
+                    alert('请输入文本描述');
+                    return;
+                }
+                inputData.prompt = prompt;
+                inputData.mode = 'text';
+            } else {
+                const file = document.getElementById('imageFile').files[0];
+                if (!file) {
+                    alert('请选择图片文件');
+                    return;
+                }
+                inputData.file = file;
+                inputData.mode = 'image';
+            }
+            
+            // 获取参数
+            inputData.quality = document.getElementById('quality').value;
+            inputData.style = document.getElementById('style').value;
+            inputData.format = document.getElementById('format').value;
+            inputData.polyCount = document.getElementById('polyCount').value;
+            
+            // 开始生成
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> 生成中...';
+            
+            try {
+                // 调用真实的API
+                const result = await callGenerationAPI(inputData, progressFill, progressText);
+                
+                if (result.success) {
+                    // 生成完成
+                    progressText.textContent = '生成完成！';
+                    btn.innerHTML = '<i class="fas fa-check"></i> 生成完成';
+                    
+                    // 显示结果
+                    setTimeout(() => {
+                        document.getElementById('resultPreview').innerHTML = `
+                            <div style="text-align: center; color: #667eea;">
+                                <i class="fas fa-cube" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+                                <div style="font-weight: 600;">3D模型生成成功！</div>
+                                <div style="font-size: 0.9rem; margin-top: 0.5rem; color: #999;">
+                                    任务ID: ${result.data.response?.jobId || '未知'}
+                                </div>
+                                <div style="font-size: 0.9rem; margin-top: 0.5rem; color: #999;">
+                                    <a href="#" onclick="queryJobStatus('${result.data.response?.jobId}')" style="color: #667eea;">查询状态</a> | 
+                                    <a href="#" style="color: #667eea;">在线预览</a>
+                                </div>
+                            </div>
+                        `;
+                        document.getElementById('resultPreview').classList.add('has-result');
+                    }, 1000);
+                } else {
+                    throw new Error(result.message || '生成失败');
+                }
+                
+            } catch (error) {
+                console.error('生成失败:', error);
+                progressText.textContent = '生成失败：' + (error.message || '未知错误');
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 生成失败';
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-magic"></i> 开始生成3D模型';
+                    progressFill.style.width = '0%';
+                    progressText.textContent = '等待开始...';
+                }, 3000);
+            }
+        });
+
+        // 调用生成API
+        async function callGenerationAPI(inputData, progressFill, progressText) {
+            // 更新进度
+            const updateProgress = (progress, text) => {
+                progressFill.style.width = progress + '%';
+                progressText.textContent = text;
+            };
+            
+            updateProgress(10, '正在准备请求...');
+            
+            try {
+                let apiUrl, requestData;
+                
+                if (inputData.mode === 'text') {
+                    // 文本生成3D
+                    apiUrl = '/api/hunyuan/text-to-3d';
+                    requestData = new URLSearchParams({
+                        prompt: inputData.prompt,
+                        format: inputData.format || 'OBJ',
+                        enablePBR: 'false'
+                    });
+                    
+                    updateProgress(25, '正在提交文本生成任务...');
+                    
+                } else if (inputData.mode === 'image') {
+                    // 图片生成3D
+                    updateProgress(25, '正在上传图片...');
+                    
+                    // 先上传图片获取URL（这里简化处理，实际应该有文件上传接口）
+                    const formData = new FormData();
+                    formData.append('file', inputData.file);
+                    
+                    // 模拟图片上传
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    const imageUrl = 'https://example.com/uploaded-image.jpg'; // 实际应该从上传接口获取
+                    
+                    apiUrl = '/api/hunyuan/image-to-3d';
+                    requestData = new URLSearchParams({
+                        imageUrl: imageUrl,
+                        format: inputData.format || 'OBJ',
+                        enablePBR: 'false'
+                    });
+                    
+                    updateProgress(50, '正在提交图片生成任务...');
+                }
+                
+                // 发送API请求
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: requestData
+                });
+                
+                updateProgress(75, '正在处理响应...');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                updateProgress(100, '任务提交成功！');
+                
+                return result;
+                
+            } catch (error) {
+                console.error('API调用失败:', error);
+                throw error;
+            }
+        }
+        
+        // 查询任务状态
+        async function queryJobStatus(jobId) {
+            if (!jobId) {
+                alert('任务ID不能为空');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/hunyuan/job-status/${jobId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`任务状态：${JSON.stringify(result.data, null, 2)}`);
+                } else {
+                    alert(`查询失败：${result.message}`);
+                }
+                
+            } catch (error) {
+                console.error('查询任务状态失败:', error);
+                alert(`查询失败：${error.message}`);
+            }
+        }
+    </script>
+    <script src="/js/performance.js"></script>
+    <script src="/js/responsive.js"></script>
+</body>
+</html>

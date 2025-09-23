@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.example.domain.evaluation.model.entity.QualityAssessmentEntity;
 import org.example.domain.evaluation.service.IEvaluationService;
-import org.example.infrastructure.service.EvaluationApplicationService;
+import org.example.service.EvaluationApplicationService;
 import org.example.types.common.Response;
 import org.springframework.web.bind.annotation.*;
 

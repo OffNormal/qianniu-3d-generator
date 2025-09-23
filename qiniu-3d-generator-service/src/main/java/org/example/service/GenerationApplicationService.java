@@ -1,4 +1,4 @@
-package org.example.infrastructure.service;
+package org.example.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.domain.cache.model.entity.CacheItemEntity;
@@ -6,13 +6,16 @@ import org.example.domain.cache.service.ICacheService;
 import org.example.domain.generation.model.entity.GenerationTaskEntity;
 import org.example.domain.generation.model.valobj.GenerationRequest;
 import org.example.domain.generation.service.IGenerationService;
+import org.example.infrastructure.gateway.ApiProviderFactory;
 import org.example.infrastructure.gateway.MeshyApiGateway;
+import org.example.infrastructure.gateway.HunyuanApiGateway;
 import org.example.types.common.Response;
 import org.example.types.enums.GenerationType;
 import org.example.types.enums.TaskStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +35,7 @@ public class GenerationApplicationService {
     private ICacheService cacheService;
     
     @Resource
-    private MeshyApiGateway meshyApiGateway;
+    private ApiProviderFactory apiProviderFactory;
     
     @Resource
     private JdbcTemplate jdbcTemplate;
@@ -42,6 +45,14 @@ public class GenerationApplicationService {
      */
     public Response<String> createGenerationTask(String userId, String inputContent, 
                                                GenerationType type, Map<String, Object> params) {
+        return createGenerationTask(userId, inputContent, type, params, null);
+    }
+    
+    /**
+     * 创建生成任务（指定API提供商）
+     */
+    public Response<String> createGenerationTask(String userId, String inputContent, 
+                                               GenerationType type, Map<String, Object> params, String apiProvider) {
         try {
             // 检查缓存
             GenerationRequest request = new GenerationRequest();
@@ -64,6 +75,16 @@ public class GenerationApplicationService {
             
             // 创建任务
             GenerationTaskEntity task = generationService.createTask(request);
+            
+            // 如果指定了API提供商，设置到任务中
+            if (apiProvider != null && !apiProvider.trim().isEmpty()) {
+                // 验证API提供商是否可用
+                if (!Arrays.asList(apiProviderFactory.getAvailableProviders()).contains(apiProvider)) {
+                    return Response.fail("不支持的API提供商: " + apiProvider);
+                }
+                task.setApiProvider(apiProvider);
+                generationService.update(task);
+            }
             
             // 异步执行任务
             executeTaskAsync(task.getTaskId());
@@ -135,12 +156,82 @@ public class GenerationApplicationService {
             try {
                 GenerationTaskEntity task = generationService.queryTask(taskId);
                 if (task != null) {
+                    // 更新任务状态为处理中
                     generationService.executeTask(task);
+                    
+                    // 调用外部API
+                    callExternalApi(task);
                 }
             } catch (Exception e) {
                 log.error("执行任务异常: {}", taskId, e);
+                // 更新任务状态为失败
+                GenerationTaskEntity task = generationService.queryTask(taskId);
+                if (task != null) {
+                    task.failProcessing("执行任务异常: " + e.getMessage());
+                    generationService.update(task);
+                }
             }
         }).start();
+    }
+    
+    /**
+     * 调用外部API
+     */
+    private void callExternalApi(GenerationTaskEntity task) {
+        try {
+            String externalTaskId;
+            String provider = task.getApiProvider() != null ? task.getApiProvider() : apiProviderFactory.getDefaultProvider();
+            
+            // 根据生成类型调用不同的API
+            if (task.getGenerationType() == GenerationType.TEXT_TO_3D) {
+                externalTaskId = apiProviderFactory.generateFromText(task.getInputContent(), provider);
+            } else if (task.getGenerationType() == GenerationType.IMAGE_TO_3D) {
+                externalTaskId = apiProviderFactory.generateFromImage(task.getInputContent(), provider);
+            } else {
+                throw new IllegalArgumentException("不支持的生成类型: " + task.getGenerationType());
+            }
+            
+            // 更新任务的外部任务ID和API提供商
+            task.setExternalTaskId(externalTaskId);
+            task.setApiProvider(provider);
+            generationService.update(task);
+            
+            log.info("外部API调用成功: taskId={}, externalTaskId={}, provider={}", 
+                    task.getTaskId(), externalTaskId, provider);
+            
+        } catch (Exception e) {
+            log.error("调用外部API失败: taskId={}", task.getTaskId(), e);
+            
+            // 如果启用了fallback，尝试备用提供商
+            if (apiProviderFactory.isFallbackEnabled()) {
+                try {
+                    String fallbackProvider = apiProviderFactory.getFallbackProvider();
+                    log.info("尝试使用备用提供商: {}", fallbackProvider);
+                    
+                    String externalTaskId;
+                    if (task.getGenerationType() == GenerationType.TEXT_TO_3D) {
+                        externalTaskId = apiProviderFactory.generateFromText(task.getInputContent(), fallbackProvider);
+                    } else {
+                        externalTaskId = apiProviderFactory.generateFromImage(task.getInputContent(), fallbackProvider);
+                    }
+                    
+                    task.setExternalTaskId(externalTaskId);
+                    task.setApiProvider(fallbackProvider);
+                    generationService.update(task);
+                    
+                    log.info("备用API调用成功: taskId={}, externalTaskId={}, provider={}", 
+                            task.getTaskId(), externalTaskId, fallbackProvider);
+                    
+                } catch (Exception fallbackException) {
+                    log.error("备用API调用也失败: taskId={}", task.getTaskId(), fallbackException);
+                    task.failProcessing("所有API提供商都调用失败: " + e.getMessage() + "; " + fallbackException.getMessage());
+                    generationService.update(task);
+                }
+            } else {
+                task.failProcessing("外部API调用失败: " + e.getMessage());
+                generationService.update(task);
+            }
+        }
     }
     
     /**
@@ -148,10 +239,34 @@ public class GenerationApplicationService {
      */
     private void updateTaskFromExternalApi(GenerationTaskEntity task) {
         try {
-            MeshyApiGateway.TaskResult result = meshyApiGateway.queryTaskStatus(task.getExternalTaskId());
+            String provider = task.getApiProvider() != null ? task.getApiProvider() : apiProviderFactory.getDefaultProvider();
+            Object result = apiProviderFactory.queryTaskStatus(task.getExternalTaskId(), provider);
             
-            if (result.isCompleted()) {
-                task.completeProcessing(result.getModelUrl(), result.getModelUrl(), result.getPreviewUrl());
+            boolean isCompleted = false;
+            boolean isFailed = false;
+            String modelUrl = null;
+            String previewUrl = null;
+            String errorMessage = null;
+            
+            // 根据不同的API提供商处理结果
+            if ("meshy".equals(provider) && result instanceof MeshyApiGateway.TaskResult) {
+                MeshyApiGateway.TaskResult meshyResult = (MeshyApiGateway.TaskResult) result;
+                isCompleted = meshyResult.isCompleted();
+                isFailed = meshyResult.isFailed();
+                modelUrl = meshyResult.getModelUrl();
+                previewUrl = meshyResult.getPreviewUrl();
+                errorMessage = meshyResult.getErrorMessage();
+            } else if ("hunyuan".equals(provider) && result instanceof HunyuanApiGateway.TaskResult) {
+                HunyuanApiGateway.TaskResult hunyuanResult = (HunyuanApiGateway.TaskResult) result;
+                isCompleted = hunyuanResult.isCompleted();
+                isFailed = hunyuanResult.isFailed();
+                modelUrl = hunyuanResult.getModelUrl();
+                previewUrl = hunyuanResult.getPreviewUrl();
+                errorMessage = hunyuanResult.getErrorMessage();
+            }
+            
+            if (isCompleted) {
+                task.completeProcessing(modelUrl, modelUrl, previewUrl);
                 
                 // 保存到缓存
                 GenerationRequest request = new GenerationRequest();
@@ -165,8 +280,8 @@ public class GenerationApplicationService {
                     .cacheKey(cacheKey)
                     .inputContent(task.getInputContent())
                     .generationType(task.getGenerationType())
-                    .resultUrl(result.getModelUrl())
-                    .previewImageUrl(result.getPreviewUrl())
+                    .resultUrl(modelUrl)
+                    .previewImageUrl(previewUrl)
                     .qualityScore(task.getQualityScore())
                     .hitCount(0)
                     .createTime(java.time.LocalDateTime.now())
@@ -174,8 +289,8 @@ public class GenerationApplicationService {
                 
                 cacheService.saveCache(cacheItem);
                 
-            } else if (result.isFailed()) {
-                task.failProcessing(result.getErrorMessage());
+            } else if (isFailed) {
+                task.failProcessing(errorMessage);
             }
             
             generationService.update(task);
@@ -191,6 +306,25 @@ public class GenerationApplicationService {
     private Map<String, Object> parseParams(String paramsJson) {
         // 简单实现，实际应该用JSON解析
         return new HashMap<>();
+    }
+    
+    /**
+     * 获取可用的API提供商信息
+     */
+    public Response<Map<String, Object>> getApiProviders() {
+        try {
+            Map<String, Object> providerInfo = new HashMap<>();
+            providerInfo.put("availableProviders", apiProviderFactory.getAvailableProviders());
+            providerInfo.put("defaultProvider", apiProviderFactory.getDefaultProvider());
+            providerInfo.put("fallbackProvider", apiProviderFactory.getFallbackProvider());
+            providerInfo.put("fallbackEnabled", apiProviderFactory.isFallbackEnabled());
+            
+            return Response.success(providerInfo);
+            
+        } catch (Exception e) {
+            log.error("获取API提供商信息失败", e);
+            return Response.fail("获取失败: " + e.getMessage());
+        }
     }
     
     /**

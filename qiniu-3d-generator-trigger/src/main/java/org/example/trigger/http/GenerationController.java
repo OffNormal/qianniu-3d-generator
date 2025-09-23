@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.example.domain.generation.model.entity.GenerationTaskEntity;
-import org.example.infrastructure.service.GenerationApplicationService;
+import org.example.service.GenerationApplicationService;
 import org.example.types.common.Response;
 import org.example.types.enums.GenerationType;
 import org.springframework.web.bind.annotation.*;
@@ -36,13 +36,14 @@ public class GenerationController {
             @Parameter(description = "用户ID") @RequestParam String userId,
             @Parameter(description = "文本描述") @RequestParam String text,
             @Parameter(description = "质量等级") @RequestParam(defaultValue = "medium") String quality,
-            @Parameter(description = "艺术风格") @RequestParam(defaultValue = "realistic") String style) {
+            @Parameter(description = "艺术风格") @RequestParam(defaultValue = "realistic") String style,
+            @Parameter(description = "API提供商") @RequestParam(required = false) String apiProvider) {
         
         Map<String, Object> params = new HashMap<>();
         params.put("quality", quality);
         params.put("style", style);
         
-        return generationApplicationService.createGenerationTask(userId, text, GenerationType.TEXT, params);
+        return generationApplicationService.createGenerationTask(userId, text, GenerationType.TEXT_TO_3D, params, apiProvider);
     }
     
     /**
@@ -54,13 +55,14 @@ public class GenerationController {
             @Parameter(description = "用户ID") @RequestParam String userId,
             @Parameter(description = "图片URL") @RequestParam String imageUrl,
             @Parameter(description = "质量等级") @RequestParam(defaultValue = "medium") String quality,
-            @Parameter(description = "生成纹理") @RequestParam(defaultValue = "true") boolean generateTexture) {
+            @Parameter(description = "生成纹理") @RequestParam(defaultValue = "true") boolean generateTexture,
+            @Parameter(description = "API提供商") @RequestParam(required = false) String apiProvider) {
         
         Map<String, Object> params = new HashMap<>();
         params.put("quality", quality);
         params.put("generateTexture", generateTexture);
         
-        return generationApplicationService.createGenerationTask(userId, imageUrl, GenerationType.IMAGE, params);
+        return generationApplicationService.createGenerationTask(userId, imageUrl, GenerationType.IMAGE_TO_3D, params, apiProvider);
     }
     
     /**
@@ -107,11 +109,20 @@ public class GenerationController {
     }
     
     /**
-     * 数据库初始化（临时接口）
+     * 数据库初始化
      */
     @PostMapping("/init-db")
     @Operation(summary = "数据库初始化", description = "初始化数据库表结构")
     public Response<String> initDatabase() {
         return generationApplicationService.initDatabase();
+    }
+    
+    /**
+     * 获取可用的API提供商列表
+     */
+    @GetMapping("/providers")
+    @Operation(summary = "获取API提供商", description = "获取可用的API提供商列表")
+    public Response<Map<String, Object>> getApiProviders() {
+        return generationApplicationService.getApiProviders();
     }
 }

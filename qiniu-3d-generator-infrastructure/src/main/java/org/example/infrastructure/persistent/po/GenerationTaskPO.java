@@ -46,6 +46,9 @@ public class GenerationTaskPO {
     /** 第三方API任务ID */
     private String externalTaskId;
     
+    /** API提供商 */
+    private String apiProvider;
+    
     /** 生成参数 */
     private String generationParams;
     

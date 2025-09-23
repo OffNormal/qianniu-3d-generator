@@ -8,11 +8,12 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>qiniu-3d-generator-app</module>
-        <module>qiniu-3d-generator-domain</module>
-        <module>qiniu-3d-generator-trigger</module>
-        <module>qiniu-3d-generator-infrastructure</module>
         <module>qiniu-3d-generator-types</module>
+        <module>qiniu-3d-generator-domain</module>
+        <module>qiniu-3d-generator-service</module>
+        <module>qiniu-3d-generator-infrastructure</module>
+        <module>qiniu-3d-generator-trigger</module>
+        <module>qiniu-3d-generator-app</module>
     </modules>
 
     <repositories>

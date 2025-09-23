@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.example.domain.cache.model.entity.CacheItemEntity;
 import org.example.domain.cache.service.impl.CacheServiceImpl;
-import org.example.infrastructure.service.CacheApplicationService;
+import org.example.service.CacheApplicationService;
 import org.example.types.common.Response;
 import org.example.types.enums.GenerationType;
 import org.springframework.web.bind.annotation.*;

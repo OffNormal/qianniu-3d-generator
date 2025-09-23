@@ -2531,3 +2531,91 @@ Caused by: java.lang.NullPointerException: Cannot invoke "org.springframework.we
 25-09-22.02:08:20.938 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
 25-09-22.02:08:25.578 [http-nio-8091-exec-1] INFO  [/]                    - Initializing Spring DispatcherServlet 'dispatcherServlet'
 25-09-22.02:08:28.000 [http-nio-8091-exec-1] INFO  AbstractOpenApiResource - Init duration for springdoc-openapi is: 413 ms
+25-09-22.14:06:16.640 [main            ] INFO  Application            - Starting Application v1.0-SNAPSHOT using Java 17.0.12 on 徐森森的PC with PID 392 (D:\qiniuCloud\qiniu-3d-generator\qiniu-3d-generator-app\target\qiniu-3d-generator-app-boot.jar started by xhs20 in D:\qiniuCloud\qiniu-3d-generator)
+25-09-22.14:06:16.643 [main            ] INFO  Application            - The following 1 profile is active: "test"
+25-09-22.14:06:17.864 [main            ] INFO  Http11NioProtocol      - Initializing ProtocolHandler ["http-nio-8091"]
+25-09-22.14:06:17.865 [main            ] INFO  StandardService        - Starting service [Tomcat]
+25-09-22.14:06:17.865 [main            ] INFO  StandardEngine         - Starting Servlet engine: [Apache Tomcat/9.0.75]
+25-09-22.14:06:17.946 [main            ] INFO  [/]                    - Initializing Spring embedded WebApplicationContext
+25-09-22.14:06:18.330 [main            ] INFO  HikariDataSource       - HikariPool-1 - Starting...
+25-09-22.14:06:18.570 [main            ] INFO  HikariDataSource       - HikariPool-1 - Start completed.
+25-09-22.14:06:19.710 [main            ] INFO  Http11NioProtocol      - Starting ProtocolHandler ["http-nio-8091"]
+25-09-22.14:06:19.749 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-22.14:06:19.752 [main            ] INFO  Application            - Started Application in 3.658 seconds (JVM running for 4.018)
+25-09-22.14:06:19.755 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-22.14:06:19.755 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-22.14:06:19.755 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
+25-09-22.14:06:46.059 [http-nio-8091-exec-1] INFO  [/]                    - Initializing Spring DispatcherServlet 'dispatcherServlet'
+25-09-22.14:45:33.937 [main            ] INFO  Application            - Starting Application v1.0-SNAPSHOT using Java 17.0.12 on 徐森森的PC with PID 33196 (D:\qiniuCloud\qiniu-3d-generator\qiniu-3d-generator-app\target\qiniu-3d-generator-app-boot.jar started by xhs20 in D:\qiniuCloud\qiniu-3d-generator)
+25-09-22.14:45:33.943 [main            ] INFO  Application            - The following 1 profile is active: "test"
+25-09-22.14:45:35.167 [main            ] INFO  Http11NioProtocol      - Initializing ProtocolHandler ["http-nio-8091"]
+25-09-22.14:45:35.167 [main            ] INFO  StandardService        - Starting service [Tomcat]
+25-09-22.14:45:35.167 [main            ] INFO  StandardEngine         - Starting Servlet engine: [Apache Tomcat/9.0.75]
+25-09-22.14:45:35.264 [main            ] INFO  [/]                    - Initializing Spring embedded WebApplicationContext
+25-09-22.14:45:35.634 [main            ] INFO  HikariDataSource       - HikariPool-1 - Starting...
+25-09-22.14:45:35.857 [main            ] INFO  HikariDataSource       - HikariPool-1 - Start completed.
+25-09-22.14:45:36.881 [main            ] INFO  Http11NioProtocol      - Starting ProtocolHandler ["http-nio-8091"]
+25-09-22.14:45:36.920 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-22.14:45:36.923 [main            ] INFO  Application            - Started Application in 3.55 seconds (JVM running for 3.932)
+25-09-22.14:45:36.928 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-22.14:45:36.928 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-22.14:45:36.928 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
+25-09-22.14:45:48.183 [http-nio-8091-exec-1] INFO  [/]                    - Initializing Spring DispatcherServlet 'dispatcherServlet'
+25-09-22.14:47:21.985 [main            ] INFO  Application            - Starting Application v1.0-SNAPSHOT using Java 17.0.12 on 徐森森的PC with PID 19440 (D:\qiniuCloud\qiniu-3d-generator\qiniu-3d-generator-app\target\qiniu-3d-generator-app-boot.jar started by xhs20 in D:\qiniuCloud\qiniu-3d-generator)
+25-09-22.14:47:21.989 [main            ] INFO  Application            - The following 1 profile is active: "test"
+25-09-22.14:47:23.289 [main            ] INFO  Http11NioProtocol      - Initializing ProtocolHandler ["http-nio-8091"]
+25-09-22.14:47:23.290 [main            ] INFO  StandardService        - Starting service [Tomcat]
+25-09-22.14:47:23.290 [main            ] INFO  StandardEngine         - Starting Servlet engine: [Apache Tomcat/9.0.75]
+25-09-22.14:47:23.369 [main            ] INFO  [/]                    - Initializing Spring embedded WebApplicationContext
+25-09-22.14:47:23.763 [main            ] INFO  HikariDataSource       - HikariPool-1 - Starting...
+25-09-22.14:47:23.994 [main            ] INFO  HikariDataSource       - HikariPool-1 - Start completed.
+25-09-22.14:47:25.063 [main            ] INFO  Http11NioProtocol      - Starting ProtocolHandler ["http-nio-8091"]
+25-09-22.14:47:25.102 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-22.14:47:25.106 [main            ] INFO  Application            - Started Application in 3.74 seconds (JVM running for 4.133)
+25-09-22.14:47:25.112 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-22.14:47:25.113 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-22.14:47:25.113 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
+25-09-22.14:47:37.527 [http-nio-8091-exec-1] INFO  [/]                    - Initializing Spring DispatcherServlet 'dispatcherServlet'
+25-09-22.14:49:13.481 [main            ] INFO  Application            - Starting Application v1.0-SNAPSHOT using Java 17.0.12 on 徐森森的PC with PID 30380 (D:\qiniuCloud\qiniu-3d-generator\qiniu-3d-generator-app\target\qiniu-3d-generator-app-boot.jar started by xhs20 in D:\qiniuCloud\qiniu-3d-generator)
+25-09-22.14:49:13.484 [main            ] INFO  Application            - The following 1 profile is active: "test"
+25-09-22.14:49:14.746 [main            ] INFO  Http11NioProtocol      - Initializing ProtocolHandler ["http-nio-8091"]
+25-09-22.14:49:14.746 [main            ] INFO  StandardService        - Starting service [Tomcat]
+25-09-22.14:49:14.747 [main            ] INFO  StandardEngine         - Starting Servlet engine: [Apache Tomcat/9.0.75]
+25-09-22.14:49:14.831 [main            ] INFO  [/]                    - Initializing Spring embedded WebApplicationContext
+25-09-22.14:49:15.174 [main            ] INFO  HikariDataSource       - HikariPool-1 - Starting...
+25-09-22.14:49:15.397 [main            ] INFO  HikariDataSource       - HikariPool-1 - Start completed.
+25-09-22.14:49:16.521 [main            ] INFO  Http11NioProtocol      - Starting ProtocolHandler ["http-nio-8091"]
+25-09-22.14:49:16.561 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-22.14:49:16.565 [main            ] INFO  Application            - Started Application in 3.65 seconds (JVM running for 4.014)
+25-09-22.14:49:16.570 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-22.14:49:16.570 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-22.14:49:16.571 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
+25-09-22.14:49:20.177 [http-nio-8091-exec-1] INFO  [/]                    - Initializing Spring DispatcherServlet 'dispatcherServlet'
+25-09-22.15:49:16.563 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-22.15:49:16.563 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-22.15:49:16.564 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-22.15:49:16.564 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
+25-09-22.16:49:16.565 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-22.16:49:16.565 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-22.16:49:16.565 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-22.16:49:16.566 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
+25-09-22.17:49:16.572 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-22.17:49:16.572 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-22.17:49:16.572 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-22.17:49:16.572 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
+25-09-22.18:49:16.574 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-22.18:49:16.574 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-22.18:49:16.574 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-22.18:49:16.574 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
+25-09-22.19:49:16.562 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-22.19:49:16.562 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-22.19:49:16.562 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-22.19:49:16.563 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
+25-09-22.20:49:16.566 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-22.20:49:16.566 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-22.20:49:16.566 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-22.20:49:16.566 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
+25-09-22.21:49:16.577 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-22.21:49:16.577 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-22.21:49:16.577 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-22.21:49:16.577 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成

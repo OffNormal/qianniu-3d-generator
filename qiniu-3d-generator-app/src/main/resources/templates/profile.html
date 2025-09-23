@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">用户中心 - 七牛云3D模型生成应用</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="/css/responsive.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* 导航栏 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #667eea;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 120px;
+        }
+
+        .user-avatar {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .avatar-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .user-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-email {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            text-decoration: none;
+            color: #333;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* 内容区域 */
+        .content-area {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #dee2e6;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* API配置 */
+        .api-provider {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .api-provider.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .api-provider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .api-provider-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .api-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* 开关按钮 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* 通知设置 */
+        .notification-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .notification-info h4 {
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+                gap: 1rem;
+            }
+
+            .sidebar {
+                position: static;
+                order: 2;
+            }
+
+            .content-area {
+                order: 1;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <i class="fas fa-cube"></i> 七牛云3D
+            </a>
+            <ul class="nav-links">
+                <li><a href="/">首页</a></li>
+                <li><a href="/workspace">工作台</a></li>
+                <li><a href="/history">历史记录</a></li>
+                <li><a href="/profile" class="active">用户中心</a></li>
+                <li><a href="/swagger-ui/index.html">API文档</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="user-avatar">
+                <div class="avatar-img">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-name">用户名</div>
+                <div class="user-email">user@example.com</div>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="#" class="menu-item active" data-section="overview">
+                    <i class="fas fa-tachometer-alt"></i> 概览
+                </a></li>
+                <li><a href="#" class="menu-item" data-section="profile">
+                    <i class="fas fa-user-edit"></i> 个人信息
+                </a></li>
+                <li><a href="#" class="menu-item" data-section="api-settings">
+                    <i class="fas fa-cog"></i> API设置
+                </a></li>
+                <li><a href="#" class="menu-item" data-section="notifications">
+                    <i class="fas fa-bell"></i> 通知设置
+                </a></li>
+                <li><a href="#" class="menu-item" data-section="security">
+                    <i class="fas fa-shield-alt"></i> 安全设置
+                </a></li>
+                <li><a href="#" class="menu-item" data-section="billing">
+                    <i class="fas fa-credit-card"></i> 账单管理
+                </a></li>
+            </ul>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content-area">
+            <!-- 概览 -->
+            <div class="content-section active" id="overview">
+                <h2 class="section-title">
+                    <i class="fas fa-tachometer-alt"></i> 账户概览
+                </h2>
+                <p class="section-subtitle">查看您的账户使用情况和统计信息</p>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">42</div>
+                        <div class="stat-label">总生成次数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">38</div>
+                        <div class="stat-label">成功生成</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">95%</div>
+                        <div class="stat-label">成功率</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">1.2GB</div>
+                        <div class="stat-label">存储使用</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <h3>最近活动</h3>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                        <p><i class="fas fa-clock"></i> 2小时前 - 生成了"可爱小猫"3D模型</p>
+                        <p><i class="fas fa-clock"></i> 1天前 - 生成了"现代建筑"3D模型</p>
+                        <p><i class="fas fa-clock"></i> 3天前 - 更新了API配置</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 个人信息 -->
+            <div class="content-section" id="profile">
+                <h2 class="section-title">
+                    <i class="fas fa-user-edit"></i> 个人信息
+                </h2>
+                <p class="section-subtitle">管理您的个人资料和偏好设置</p>
+
+                <form>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">姓名</label>
+                            <input type="text" id="firstName" class="form-input" value="张三">
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">姓氏</label>
+                            <input type="text" id="lastName" class="form-input" value="先生">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">邮箱地址</label>
+                        <input type="email" id="email" class="form-input" value="user@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">手机号码</label>
+                        <input type="tel" id="phone" class="form-input" value="+86 138 0000 0000">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="company">公司/组织</label>
+                        <input type="text" id="company" class="form-input" value="七牛云">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bio">个人简介</label>
+                        <textarea id="bio" class="form-textarea" placeholder="介绍一下您自己...">热爱3D设计和AI技术的创作者</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存更改
+                        </button>
+                        <button type="button" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> 重置
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- API设置 -->
+            <div class="content-section" id="api-settings">
+                <h2 class="section-title">
+                    <i class="fas fa-cog"></i> API设置
+                </h2>
+                <p class="section-subtitle">配置您的API提供商和参数</p>
+
+                <div class="api-provider active">
+                    <div class="api-provider-header">
+                        <div class="api-provider-name">Meshy API</div>
+                        <div class="api-status status-connected">已连接</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="meshyApiKey">API密钥</label>
+                        <input type="password" id="meshyApiKey" class="form-input" value="msy_xxxxxxxxxxxxxxxx">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="meshyQuality">默认质量</label>
+                            <select id="meshyQuality" class="form-select">
+                                <option value="low">低质量</option>
+                                <option value="medium" selected>中等质量</option>
+                                <option value="high">高质量</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="meshyStyle">默认风格</label>
+                            <select id="meshyStyle" class="form-select">
+                                <option value="realistic" selected>写实风格</option>
+                                <option value="cartoon">卡通风格</option>
+                                <option value="anime">动漫风格</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="api-provider">
+                    <div class="api-provider-header">
+                        <div class="api-provider-name">OpenAI API</div>
+                        <div class="api-status status-disconnected">未连接</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="openaiApiKey">API密钥</label>
+                        <input type="password" id="openaiApiKey" class="form-input" placeholder="sk-xxxxxxxxxxxxxxxx">
+                    </div>
+                    <div class="form-group">
+                        <label for="openaiModel">模型版本</label>
+                        <select id="openaiModel" class="form-select">
+                            <option value="gpt-4">GPT-4</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button type="button" class="btn btn-primary">
+                        <i class="fas fa-save"></i> 保存API设置
+                    </button>
+                    <button type="button" class="btn btn-secondary">
+                        <i class="fas fa-vial"></i> 测试连接
+                    </button>
+                </div>
+            </div>
+
+            <!-- 通知设置 -->
+            <div class="content-section" id="notifications">
+                <h2 class="section-title">
+                    <i class="fas fa-bell"></i> 通知设置
+                </h2>
+                <p class="section-subtitle">管理您的通知偏好</p>
+
+                <div class="notification-item">
+                    <div class="notification-info">
+                        <h4>生成完成通知</h4>
+                        <p>当3D模型生成完成时发送通知</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-info">
+                        <h4>生成失败通知</h4>
+                        <p>当3D模型生成失败时发送通知</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-info">
+                        <h4>系统维护通知</h4>
+                        <p>系统维护和更新时发送通知</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="notification-item">
+                    <div class="notification-info">
+                        <h4>营销邮件</h4>
+                        <p>接收产品更新和优惠信息</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="form-group" style="margin-top: 2rem;">
+                    <button type="button" class="btn btn-primary">
+                        <i class="fas fa-save"></i> 保存通知设置
+                    </button>
+                </div>
+            </div>
+
+            <!-- 安全设置 -->
+            <div class="content-section" id="security">
+                <h2 class="section-title">
+                    <i class="fas fa-shield-alt"></i> 安全设置
+                </h2>
+                <p class="section-subtitle">管理您的账户安全</p>
+
+                <div class="form-group">
+                    <h3>修改密码</h3>
+                    <div class="form-group">
+                        <label for="currentPassword">当前密码</label>
+                        <input type="password" id="currentPassword" class="form-input">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newPassword">新密码</label>
+                            <input type="password" id="newPassword" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">确认新密码</label>
+                            <input type="password" id="confirmPassword" class="form-input">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary">
+                        <i class="fas fa-key"></i> 更新密码
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <h3>两步验证</h3>
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <h4>启用两步验证</h4>
+                            <p>为您的账户添加额外的安全保护</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <h3>登录历史</h3>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                        <p><i class="fas fa-desktop"></i> 当前会话 - Windows Chrome (当前)</p>
+                        <p><i class="fas fa-mobile-alt"></i> 2小时前 - iPhone Safari</p>
+                        <p><i class="fas fa-desktop"></i> 1天前 - Windows Chrome</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 账单管理 -->
+            <div class="content-section" id="billing">
+                <h2 class="section-title">
+                    <i class="fas fa-credit-card"></i> 账单管理
+                </h2>
+                <p class="section-subtitle">管理您的订阅和付款信息</p>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">免费版</div>
+                        <div class="stat-label">当前套餐</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">8/50</div>
+                        <div class="stat-label">本月使用量</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">¥0</div>
+                        <div class="stat-label">本月费用</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">42</div>
+                        <div class="stat-label">剩余额度</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <h3>升级套餐</h3>
+                    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-top: 1rem;">
+                        <h4>专业版 - ¥99/月</h4>
+                        <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                            <li>每月500次生成</li>
+                            <li>高质量模型支持</li>
+                            <li>优先处理队列</li>
+                            <li>API访问权限</li>
+                        </ul>
+                        <button type="button" class="btn btn-primary">
+                            <i class="fas fa-arrow-up"></i> 立即升级
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <h3>账单历史</h3>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                        <p>暂无账单记录</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 侧边栏菜单切换
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuItems = document.querySelectorAll('.menu-item');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 移除所有活动状态
+                    menuItems.forEach(mi => mi.classList.remove('active'));
+                    contentSections.forEach(cs => cs.classList.remove('active'));
+                    
+                    // 添加当前活动状态
+                    this.classList.add('active');
+                    const targetSection = this.getAttribute('data-section');
+                    document.getElementById(targetSection).classList.add('active');
+                });
+            });
+        });
+
+        // 表单提交处理
+        function saveProfile() {
+            alert('个人信息已保存！');
+        }
+
+        function saveApiSettings() {
+            alert('API设置已保存！');
+        }
+
+        function saveNotificationSettings() {
+            alert('通知设置已保存！');
+        }
+
+        function updatePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            
+            if (!current || !newPass || !confirm) {
+                alert('请填写所有密码字段');
+                return;
+            }
+            
+            if (newPass !== confirm) {
+                alert('新密码和确认密码不匹配');
+                return;
+            }
+            
+            alert('密码已更新！');
+        }
+
+        function testApiConnection() {
+            alert('正在测试API连接...');
+            // 这里应该调用实际的API测试接口
+        }
+
+        // 绑定按钮事件
+        document.addEventListener('DOMContentLoaded', function() {
+            // 个人信息保存
+            const profileForm = document.querySelector('#profile form');
+            if (profileForm) {
+                profileForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveProfile();
+                });
+            }
+
+            // API设置保存
+            const apiSaveBtn = document.querySelector('#api-settings .btn-primary');
+            if (apiSaveBtn) {
+                apiSaveBtn.addEventListener('click', saveApiSettings);
+            }
+
+            // API连接测试
+            const apiTestBtn = document.querySelector('#api-settings .btn-secondary');
+            if (apiTestBtn) {
+                apiTestBtn.addEventListener('click', testApiConnection);
+            }
+
+            // 通知设置保存
+            const notificationSaveBtn = document.querySelector('#notifications .btn-primary');
+            if (notificationSaveBtn) {
+                notificationSaveBtn.addEventListener('click', saveNotificationSettings);
+            }
+
+            // 密码更新
+            const passwordUpdateBtn = document.querySelector('#security .btn-primary');
+            if (passwordUpdateBtn) {
+                passwordUpdateBtn.addEventListener('click', updatePassword);
+            }
+        });
+    </script>
+    <script src="/js/performance.js"></script>
+    <script src="/js/responsive.js"></script>
+</body>
+</html>

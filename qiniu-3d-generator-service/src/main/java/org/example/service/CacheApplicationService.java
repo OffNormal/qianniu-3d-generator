@@ -1,4 +1,4 @@
-package org.example.infrastructure.service;
+package org.example.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.domain.cache.model.entity.CacheItemEntity;

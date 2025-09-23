@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * OpenAPI配置类
+ * SpringDoc OpenAPI 3 配置类
  */
 @Configuration
 public class SwaggerConfig {

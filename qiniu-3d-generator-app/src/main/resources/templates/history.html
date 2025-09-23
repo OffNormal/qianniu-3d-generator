@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">历史记录 - 七牛云3D模型生成应用</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="/css/responsive.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* 导航栏 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #667eea;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            color: white;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .page-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+        }
+
+        /* 筛选和搜索区域 */
+        .filter-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .filter-input,
+        .filter-select {
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .filter-input:focus,
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: transform 0.3s;
+            align-self: flex-end;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 历史记录列表 */
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .history-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .history-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-preview {
+            height: 200px;
+            background: linear-gradient(45deg, #f0f2f5, #e1e5e9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-preview .placeholder {
+            font-size: 3rem;
+            color: #999;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .card-type {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #dee2e6;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 3rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 2px solid #667eea;
+            background: transparent;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover,
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: white;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin-bottom: 2rem;
+        }
+
+        .empty-state .cta-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .empty-state .cta-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .main-content {
+                padding: 0 1rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-btn {
+                align-self: stretch;
+            }
+
+            .history-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .card-actions {
+                flex-direction: column;
+            }
+
+            .pagination {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <i class="fas fa-cube"></i> 七牛云3D
+            </a>
+            <ul class="nav-links">
+                <li><a href="/">首页</a></li>
+                <li><a href="/workspace">工作台</a></li>
+                <li><a href="/history" class="active">历史记录</a></li>
+                <li><a href="/profile">用户中心</a></li>
+                <li><a href="/swagger-ui/index.html">API文档</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-history"></i> 历史记录
+            </h1>
+            <p class="page-subtitle">查看和管理您的3D模型生成历史</p>
+        </div>
+
+        <!-- 筛选和搜索区域 -->
+        <div class="filter-section">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="searchInput">搜索关键词</label>
+                    <input type="text" id="searchInput" class="filter-input" placeholder="输入描述关键词...">
+                </div>
+                <div class="filter-group">
+                    <label for="typeFilter">生成类型</label>
+                    <select id="typeFilter" class="filter-select">
+                        <option value="">全部类型</option>
+                        <option value="text">文本生成</option>
+                        <option value="image">图片生成</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter">状态</label>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">全部状态</option>
+                        <option value="completed">已完成</option>
+                        <option value="processing">处理中</option>
+                        <option value="failed">失败</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="dateFilter">时间范围</label>
+                    <select id="dateFilter" class="filter-select">
+                        <option value="">全部时间</option>
+                        <option value="today">今天</option>
+                        <option value="week">最近一周</option>
+                        <option value="month">最近一月</option>
+                    </select>
+                </div>
+                <button class="search-btn" onclick="searchHistory()">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+        </div>
+
+        <!-- 历史记录列表 -->
+        <div id="historyContainer">
+            <div class="history-grid" id="historyGrid">
+                <!-- 历史记录卡片将通过JavaScript动态加载 -->
+            </div>
+        </div>
+
+        <!-- 分页 -->
+        <div class="pagination" id="pagination">
+            <!-- 分页按钮将通过JavaScript动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // 模拟历史记录数据
+        const mockHistoryData = [
+            {
+                id: '1',
+                title: '可爱的小猫咪3D模型',
+                type: 'text',
+                status: 'completed',
+                createdAt: '2024-01-15 14:30',
+                previewUrl: null,
+                modelUrl: '/models/cat.obj',
+                description: '一只可爱的橘色小猫，坐着的姿势，卡通风格'
+            },
+            {
+                id: '2',
+                title: '现代建筑设计',
+                type: 'image',
+                status: 'processing',
+                createdAt: '2024-01-15 13:45',
+                previewUrl: null,
+                modelUrl: null,
+                description: '基于建筑图片生成的现代办公楼3D模型'
+            },
+            {
+                id: '3',
+                title: '科幻飞船模型',
+                type: 'text',
+                status: 'completed',
+                createdAt: '2024-01-14 16:20',
+                previewUrl: null,
+                modelUrl: '/models/spaceship.obj',
+                description: '未来科幻风格的宇宙飞船，流线型设计'
+            },
+            {
+                id: '4',
+                title: '古典花瓶',
+                type: 'image',
+                status: 'failed',
+                createdAt: '2024-01-14 11:15',
+                previewUrl: null,
+                modelUrl: null,
+                description: '基于古典花瓶图片生成3D模型失败'
+            },
+            {
+                id: '5',
+                title: '卡通汽车模型',
+                type: 'text',
+                status: 'completed',
+                createdAt: '2024-01-13 09:30',
+                previewUrl: null,
+                modelUrl: '/models/car.obj',
+                description: '可爱的卡通风格小汽车，红色车身'
+            }
+        ];
+
+        let currentPage = 1;
+        let filteredData = [...mockHistoryData];
+        const itemsPerPage = 6;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHistoryData();
+        });
+
+        // 加载历史记录数据
+        function loadHistoryData() {
+            // 这里应该调用实际的API
+            // const response = await fetch('/api/generation/tasks?userId=current_user');
+            // const data = await response.json();
+            
+            renderHistoryGrid();
+            renderPagination();
+        }
+
+        // 渲染历史记录网格
+        function renderHistoryGrid() {
+            const container = document.getElementById('historyGrid');
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            if (pageData.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i class="fas fa-inbox"></i>
+                        <h3>暂无历史记录</h3>
+                        <p>您还没有生成过3D模型，快去工作台创建您的第一个作品吧！</p>
+                        <a href="/workspace" class="cta-btn">
+                            <i class="fas fa-plus"></i> 开始创建
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = pageData.map(item => `
+                <div class="history-card">
+                    <div class="card-preview">
+                        ${item.previewUrl ? 
+                            `<img src="${item.previewUrl}" alt="${item.title}">` : 
+                            '<i class="fas fa-cube placeholder"></i>'
+                        }
+                        <div class="status-badge status-${item.status}">
+                            ${getStatusText(item.status)}
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-title">${item.title}</h3>
+                        <div class="card-meta">
+                            <span class="card-type">${getTypeText(item.type)}</span>
+                            <span>${item.createdAt}</span>
+                        </div>
+                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            ${item.description}
+                        </p>
+                        <div class="card-actions">
+                            ${item.status === 'completed' ? 
+                                `<button class="action-btn btn-primary" onclick="viewModel('${item.id}')">
+                                    <i class="fas fa-eye"></i> 查看
+                                </button>
+                                <button class="action-btn btn-secondary" onclick="downloadModel('${item.id}')">
+                                    <i class="fas fa-download"></i> 下载
+                                </button>` :
+                                item.status === 'processing' ?
+                                `<button class="action-btn btn-secondary" onclick="checkProgress('${item.id}')">
+                                    <i class="fas fa-sync-alt"></i> 查看进度
+                                </button>` :
+                                `<button class="action-btn btn-secondary" onclick="retryGeneration('${item.id}')">
+                                    <i class="fas fa-redo"></i> 重新生成
+                                </button>`
+                            }
+                            <button class="action-btn btn-danger" onclick="deleteHistory('${item.id}')">
+                                <i class="fas fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染分页
+        function renderPagination() {
+            const container = document.getElementById('pagination');
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-left"></i> 上一页
+                </button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage || i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    paginationHTML += `
+                        <button onclick="changePage(${i})" ${i === currentPage ? 'class="active"' : ''}>
+                            ${i}
+                        </button>
+                    `;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    paginationHTML += '<span>...</span>';
+                }
+            }
+
+            paginationHTML += `
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    下一页 <i class="fas fa-chevron-right"></i>
+                </button>
+            `;
+
+            container.innerHTML = paginationHTML;
+        }
+
+        // 切换页面
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            renderHistoryGrid();
+            renderPagination();
+        }
+
+        // 搜索历史记录
+        function searchHistory() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+
+            filteredData = mockHistoryData.filter(item => {
+                const matchesSearch = !searchTerm || 
+                    item.title.toLowerCase().includes(searchTerm) || 
+                    item.description.toLowerCase().includes(searchTerm);
+                
+                const matchesType = !typeFilter || item.type === typeFilter;
+                const matchesStatus = !statusFilter || item.status === statusFilter;
+                
+                // 简化的日期过滤逻辑
+                let matchesDate = true;
+                if (dateFilter) {
+                    const itemDate = new Date(item.createdAt);
+                    const now = new Date();
+                    
+                    switch (dateFilter) {
+                        case 'today':
+                            matchesDate = itemDate.toDateString() === now.toDateString();
+                            break;
+                        case 'week':
+                            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                            matchesDate = itemDate >= weekAgo;
+                            break;
+                        case 'month':
+                            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                            matchesDate = itemDate >= monthAgo;
+                            break;
+                    }
+                }
+
+                return matchesSearch && matchesType && matchesStatus && matchesDate;
+            });
+
+            currentPage = 1;
+            renderHistoryGrid();
+            renderPagination();
+        }
+
+        // 获取状态文本
+        function getStatusText(status) {
+            const statusMap = {
+                'completed': '已完成',
+                'processing': '处理中',
+                'failed': '失败'
+            };
+            return statusMap[status] || status;
+        }
+
+        // 获取类型文本
+        function getTypeText(type) {
+            const typeMap = {
+                'text': '文本生成',
+                'image': '图片生成'
+            };
+            return typeMap[type] || type;
+        }
+
+        // 查看模型
+        function viewModel(id) {
+            // 这里应该打开3D模型查看器
+            alert(`查看模型 ${id} - 这里将打开3D模型查看器`);
+        }
+
+        // 下载模型
+        function downloadModel(id) {
+            // 这里应该触发模型文件下载
+            alert(`下载模型 ${id} - 这里将开始下载模型文件`);
+        }
+
+        // 查看进度
+        function checkProgress(id) {
+            // 这里应该查询任务进度
+            alert(`查看进度 ${id} - 这里将显示生成进度详情`);
+        }
+
+        // 重新生成
+        function retryGeneration(id) {
+            if (confirm('确定要重新生成这个模型吗？')) {
+                // 这里应该调用重新生成API
+                alert(`重新生成 ${id} - 这里将重新开始生成任务`);
+            }
+        }
+
+        // 删除历史记录
+        function deleteHistory(id) {
+            if (confirm('确定要删除这条历史记录吗？此操作不可恢复。')) {
+                // 这里应该调用删除API
+                const index = filteredData.findIndex(item => item.id === id);
+                if (index > -1) {
+                    filteredData.splice(index, 1);
+                    renderHistoryGrid();
+                    renderPagination();
+                }
+            }
+        }
+
+        // 监听搜索输入
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchHistory();
+            }
+        });
+
+        // 监听筛选器变化
+        ['typeFilter', 'statusFilter', 'dateFilter'].forEach(id => {
+            document.getElementById(id).addEventListener('change', searchHistory);
+        });
+    </script>
+    <script src="/js/performance.js"></script>
+    <script src="/js/responsive.js"></script>
+</body>
+</html>

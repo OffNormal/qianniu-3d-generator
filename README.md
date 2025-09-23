@@ -5,9 +5,11 @@
 ## 🚀 项目特性
 
 - **多模态输入**：支持文本描述和图片上传生成3D模型
+- **多API提供商**：支持混元3D、Meshy等多个API提供商，可自由选择或自动切换
 - **智能缓存**：基于内容哈希的智能缓存机制，提升生成效率
 - **质量评估**：自动化模型质量评估系统，多维度评分
 - **API优化**：请求限流、超时控制、错误重试机制
+- **容错机制**：支持API提供商故障自动切换，确保服务可用性
 - **DDD架构**：领域驱动设计，清晰的分层架构
 - **实时监控**：任务状态实时跟踪，用户统计分析
 
@@ -106,7 +108,8 @@ Content-Type: application/json
   "userId": "user123",
   "textPrompt": "一只可爱的小猫",
   "style": "cartoon",
-  "quality": "high"
+  "quality": "high",
+  "apiProvider": "hunyuan"  // 可选：指定API提供商 (hunyuan/meshy)
 }
 ```
 
@@ -119,14 +122,29 @@ userId: user123
 imageFile: [图片文件]
 style: realistic
 quality: medium
+apiProvider: hunyuan  // 可选：指定API提供商 (hunyuan/meshy)
 ```
 
-#### 3. 查询任务状态
+#### 3. 获取可用API提供商
+```http
+GET /api/generation/providers
+```
+
+响应示例：
+```json
+{
+  "availableProviders": ["hunyuan", "meshy"],
+  "defaultProvider": "hunyuan",
+  "fallbackProvider": "meshy",
+  "fallbackEnabled": true
+}
+
+#### 4. 查询任务状态
 ```http
 GET /api/generation/task/{taskId}/status
 ```
 
-#### 4. 获取用户任务列表
+#### 5. 获取用户任务列表
 ```http
 GET /api/generation/user/{userId}/tasks?page=0&size=10
 ```
@@ -156,6 +174,69 @@ Content-Type: application/json
   "generationType": "TEXT"
 }
 ```
+
+## 🔌 API提供商配置
+
+### 支持的API提供商
+
+| 提供商 | 类型 | 支持功能 | 配置键 |
+|--------|------|----------|--------|
+| 混元3D | 腾讯云 | 文本转3D、图片转3D | `hunyuan` |
+| Meshy | 第三方 | 文本转3D、图片转3D | `meshy` |
+
+### 配置方式
+
+在 `application.yml` 中配置API提供商：
+
+```yaml
+# 混元3D配置
+hunyuan:
+  api:
+    base-url: https://hunyuan.tencentcloudapi.com
+    secret-id: your_secret_id
+    secret-key: your_secret_key
+    region: ap-beijing
+
+# Meshy配置  
+meshy:
+  api:
+    base-url: https://api.meshy.ai
+    api-key: your_meshy_api_key
+
+# API提供商策略配置
+api:
+  provider:
+    default: hunyuan              # 默认提供商
+    fallback: meshy              # 备用提供商
+    fallback-enabled: true       # 启用故障切换
+    timeout-seconds: 30          # 请求超时时间
+```
+
+### 使用方式
+
+#### 1. 使用默认提供商
+不指定 `apiProvider` 参数，系统将使用配置的默认提供商：
+
+```json
+{
+  "userId": "user123",
+  "textPrompt": "一只可爱的小猫"
+}
+```
+
+#### 2. 指定特定提供商
+通过 `apiProvider` 参数指定使用的提供商：
+
+```json
+{
+  "userId": "user123", 
+  "textPrompt": "一只可爱的小猫",
+  "apiProvider": "meshy"
+}
+```
+
+#### 3. 故障自动切换
+当指定的API提供商不可用时，系统会自动切换到备用提供商（如果启用了fallback）。
 
 ## 🔧 配置说明
 

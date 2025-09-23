@@ -47,6 +47,11 @@
             <groupId>org.example</groupId>
             <artifactId>qiniu-3d-generator-infrastructure</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.example</groupId>
+            <artifactId>qiniu-3d-generator-service</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
 
     </dependencies>
 

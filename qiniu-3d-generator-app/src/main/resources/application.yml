@@ -14,9 +14,9 @@ spring:
   # 数据源配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/qiniu_3d_generator?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:13306/qiniu_3d_generator?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
-    password: 123456
+    password: root123456
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -27,7 +27,7 @@ spring:
   # Redis配置
   redis:
     host: localhost
-    port: 6379
+    port: 16379
     password: 
     database: 0
     timeout: 5000ms
@@ -59,6 +59,35 @@ meshy:
   api:
     url: https://api.meshy.ai
     key: ${MESHY_API_KEY:your_meshy_api_key_here}
+
+# 腾讯云API配置
+tencent:
+  cloud:
+    secret-id: ${TENCENT_SECRET_ID:AKIDeFlBRWP6arwoTxW2bDDB4nLeksqcYyFL}
+    secret-key: ${TENCENT_SECRET_KEY:2sWyNbuAWo8SesKgu7FRVRl6MVXTHxW3}
+    region: ${TENCENT_REGION:ap-beijing}
+    hunyuan:
+      endpoint: ai3d.tencentcloudapi.com
+      version: 2025-05-13
+      timeout: 60000
+      max-retries: 3
+      enable-pbr: false
+      default-format: OBJ
+
+# 混元API配置（用于代码中的@Value注解）
+hunyuan:
+  api:
+    url: https://hunyuan.tencentcloudapi.com
+    secret-id: ${TENCENT_SECRET_ID:AKIDeFlBRWP6arwoTxW2bDDB4nLeksqcYyFL}
+    secret-key: ${TENCENT_SECRET_KEY:2sWyNbuAWo8SesKgu7FRVRl6MVXTHxW3}
+    region: ${TENCENT_REGION:ap-beijing}
+
+# API提供商配置
+api:
+  provider:
+    default: meshy  # 默认使用meshy，可选: meshy, hunyuan
+    fallback: hunyuan  # 备用API
+    enable-fallback: true
 
 # 日志配置
 logging:

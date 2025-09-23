@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">API文档 - 七牛云3D模型生成应用</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="/css/responsive.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* 导航栏 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #667eea;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 120px;
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .api-menu {
+            list-style: none;
+        }
+
+        .api-menu li {
+            margin-bottom: 0.5rem;
+        }
+
+        .api-menu a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            text-decoration: none;
+            color: #333;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .api-menu a:hover,
+        .api-menu a.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .api-category {
+            font-weight: 600;
+            color: #667eea;
+            margin: 1rem 0 0.5rem 0;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 内容区域 */
+        .content-area {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .page-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        /* API端点 */
+        .api-endpoint {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .endpoint-header {
+            background: #667eea;
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .endpoint-method {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .endpoint-method.get { background: #28a745; }
+        .endpoint-method.post { background: #007bff; }
+        .endpoint-method.put { background: #ffc107; color: #333; }
+        .endpoint-method.delete { background: #dc3545; }
+
+        .endpoint-path {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+        }
+
+        .endpoint-content {
+            padding: 1.5rem;
+        }
+
+        .endpoint-description {
+            margin-bottom: 1.5rem;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* 参数表格 */
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+
+        .params-table th,
+        .params-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .params-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .param-required {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .param-optional {
+            color: #6c757d;
+        }
+
+        .param-type {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        /* 代码示例 */
+        .code-example {
+            margin-bottom: 1.5rem;
+        }
+
+        .code-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+        }
+
+        .code-tab {
+            padding: 0.75rem 1rem;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        .code-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .code-content {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0 0 8px 8px;
+            overflow-x: auto;
+        }
+
+        .code-content pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* 响应示例 */
+        .response-example {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .response-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-200 { background: #d4edda; color: #155724; }
+        .status-400 { background: #f8d7da; color: #721c24; }
+        .status-500 { background: #f8d7da; color: #721c24; }
+
+        /* 快速开始 */
+        .quick-start {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .quick-start h3 {
+            margin-bottom: 1rem;
+        }
+
+        .quick-start-steps {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+
+        .quick-start-steps li {
+            counter-increment: step-counter;
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .quick-start-steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: rgba(255, 255, 255, 0.2);
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        /* 按钮 */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+                gap: 1rem;
+            }
+
+            .sidebar {
+                position: static;
+                order: 2;
+            }
+
+            .content-area {
+                order: 1;
+            }
+
+            .endpoint-header {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+
+            .code-tabs {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <i class="fas fa-cube"></i> 七牛云3D
+            </a>
+            <ul class="nav-links">
+                <li><a href="/">首页</a></li>
+                <li><a href="/workspace">工作台</a></li>
+                <li><a href="/history">历史记录</a></li>
+                <li><a href="/profile">用户中心</a></li>
+                <li><a href="/api-docs" class="active">API文档</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="sidebar-title">API文档导航</div>
+            <ul class="api-menu">
+                <li><a href="#overview" class="menu-item active">
+                    <i class="fas fa-home"></i> 概览
+                </a></li>
+                
+                <div class="api-category">3D模型生成</div>
+                <li><a href="#text-to-3d" class="menu-item">
+                    <i class="fas fa-font"></i> 文本生成3D
+                </a></li>
+                <li><a href="#image-to-3d" class="menu-item">
+                    <i class="fas fa-image"></i> 图片生成3D
+                </a></li>
+                <li><a href="#task-status" class="menu-item">
+                    <i class="fas fa-tasks"></i> 任务状态
+                </a></li>
+                <li><a href="#task-list" class="menu-item">
+                    <i class="fas fa-list"></i> 任务列表
+                </a></li>
+                
+                <div class="api-category">智能缓存</div>
+                <li><a href="#cache-search" class="menu-item">
+                    <i class="fas fa-search"></i> 缓存查找
+                </a></li>
+                <li><a href="#cache-warm" class="menu-item">
+                    <i class="fas fa-fire"></i> 预热缓存
+                </a></li>
+                <li><a href="#cache-clear" class="menu-item">
+                    <i class="fas fa-trash"></i> 清理缓存
+                </a></li>
+                
+                <div class="api-category">质量评估</div>
+                <li><a href="#quality-eval" class="menu-item">
+                    <i class="fas fa-star"></i> 质量评估
+                </a></li>
+                <li><a href="#eval-report" class="menu-item">
+                    <i class="fas fa-chart-bar"></i> 评估报告
+                </a></li>
+                
+                <div class="api-category">系统</div>
+                <li><a href="#app-info" class="menu-item">
+                    <i class="fas fa-info-circle"></i> 应用信息
+                </a></li>
+                <li><a href="#health-check" class="menu-item">
+                    <i class="fas fa-heartbeat"></i> 健康检查
+                </a></li>
+            </ul>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content-area">
+            <!-- 概览 -->
+            <div class="content-section active" id="overview">
+                <div class="page-header">
+                    <h1 class="page-title">API文档</h1>
+                    <p class="page-subtitle">七牛云3D模型生成应用 RESTful API 接口文档</p>
+                </div>
+
+                <div class="quick-start">
+                    <h3><i class="fas fa-rocket"></i> 快速开始</h3>
+                    <ol class="quick-start-steps">
+                        <li>获取API密钥并配置认证信息</li>
+                        <li>选择合适的API端点进行调用</li>
+                        <li>发送请求并处理响应结果</li>
+                        <li>根据任务ID查询生成状态</li>
+                    </ol>
+                    <div style="margin-top: 1.5rem;">
+                        <a href="/swagger-ui/index.html" class="btn btn-outline" target="_blank">
+                            <i class="fas fa-external-link-alt"></i> 打开Swagger UI
+                        </a>
+                    </div>
+                </div>
+
+                <h3>基础信息</h3>
+                <table class="params-table">
+                    <tr>
+                        <th>项目</th>
+                        <th>值</th>
+                    </tr>
+                    <tr>
+                        <td>Base URL</td>
+                        <td><code>http://localhost:8091</code></td>
+                    </tr>
+                    <tr>
+                        <td>API版本</td>
+                        <td>v1.0</td>
+                    </tr>
+                    <tr>
+                        <td>认证方式</td>
+                        <td>API Key</td>
+                    </tr>
+                    <tr>
+                        <td>数据格式</td>
+                        <td>JSON</td>
+                    </tr>
+                </table>
+
+                <h3>通用响应格式</h3>
+                <div class="response-example">
+                    <div class="response-status status-200">200 OK</div>
+                    <pre><code>{
+  "code": "0000",
+  "info": "success",
+  "data": {
+    // 具体数据内容
+  }
+}</code></pre>
+                </div>
+            </div>
+
+            <!-- 文本生成3D -->
+            <div class="content-section" id="text-to-3d">
+                <div class="api-endpoint">
+                    <div class="endpoint-header">
+                        <div class="endpoint-path">/api/generation/text-to-3d</div>
+                        <div class="endpoint-method post">POST</div>
+                    </div>
+                    <div class="endpoint-content">
+                        <div class="endpoint-description">
+                            根据文本描述生成3D模型。支持多种风格和质量设置，生成过程为异步处理。
+                        </div>
+
+                        <h4>请求参数</h4>
+                        <table class="params-table">
+                            <thead>
+                                <tr>
+                                    <th>参数名</th>
+                                    <th>类型</th>
+                                    <th>必填</th>
+                                    <th>说明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>prompt</td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td><span class="param-required">是</span></td>
+                                    <td>文本描述，用于生成3D模型</td>
+                                </tr>
+                                <tr>
+                                    <td>style</td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td><span class="param-optional">否</span></td>
+                                    <td>生成风格：realistic, cartoon, anime</td>
+                                </tr>
+                                <tr>
+                                    <td>quality</td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td><span class="param-optional">否</span></td>
+                                    <td>生成质量：low, medium, high</td>
+                                </tr>
+                                <tr>
+                                    <td>format</td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td><span class="param-optional">否</span></td>
+                                    <td>输出格式：obj, fbx, glb</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="code-example">
+                            <div class="code-tabs">
+                                <button class="code-tab active" onclick="showCode('curl-text')">cURL</button>
+                                <button class="code-tab" onclick="showCode('js-text')">JavaScript</button>
+                                <button class="code-tab" onclick="showCode('python-text')">Python</button>
+                            </div>
+                            <div class="code-content" id="curl-text">
+                                <pre><code>curl -X POST "http://localhost:8091/api/generation/text-to-3d" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "一只可爱的小猫咪",
+    "style": "realistic",
+    "quality": "high",
+    "format": "obj"
+  }'</code></pre>
+                            </div>
+                            <div class="code-content" id="js-text" style="display: none;">
+                                <pre><code>const response = await fetch('http://localhost:8091/api/generation/text-to-3d', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    prompt: '一只可爱的小猫咪',
+    style: 'realistic',
+    quality: 'high',
+    format: 'obj'
+  })
+});
+
+const result = await response.json();
+console.log(result);</code></pre>
+                            </div>
+                            <div class="code-content" id="python-text" style="display: none;">
+                                <pre><code>import requests
+
+url = "http://localhost:8091/api/generation/text-to-3d"
+data = {
+    "prompt": "一只可爱的小猫咪",
+    "style": "realistic",
+    "quality": "high",
+    "format": "obj"
+}
+
+response = requests.post(url, json=data)
+result = response.json()
+print(result)</code></pre>
+                            </div>
+                        </div>
+
+                        <h4>响应示例</h4>
+                        <div class="response-example">
+                            <div class="response-status status-200">200 OK</div>
+                            <pre><code>{
+  "code": "0000",
+  "info": "success",
+  "data": {
+    "taskId": "task_123456789",
+    "status": "processing",
+    "estimatedTime": 300,
+    "message": "任务已提交，正在生成中..."
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图片生成3D -->
+            <div class="content-section" id="image-to-3d">
+                <div class="api-endpoint">
+                    <div class="endpoint-header">
+                        <div class="endpoint-path">/api/generation/image-to-3d</div>
+                        <div class="endpoint-method post">POST</div>
+                    </div>
+                    <div class="endpoint-content">
+                        <div class="endpoint-description">
+                            根据上传的图片生成3D模型。支持多种图片格式，自动识别物体轮廓并生成对应的3D模型。
+                        </div>
+
+                        <h4>请求参数</h4>
+                        <table class="params-table">
+                            <thead>
+                                <tr>
+                                    <th>参数名</th>
+                                    <th>类型</th>
+                                    <th>必填</th>
+                                    <th>说明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>image</td>
+                                    <td><span class="param-type">file</span></td>
+                                    <td><span class="param-required">是</span></td>
+                                    <td>图片文件，支持jpg、png、webp格式</td>
+                                </tr>
+                                <tr>
+                                    <td>quality</td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td><span class="param-optional">否</span></td>
+                                    <td>生成质量：low, medium, high</td>
+                                </tr>
+                                <tr>
+                                    <td>format</td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td><span class="param-optional">否</span></td>
+                                    <td>输出格式：obj, fbx, glb</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="code-example">
+                            <div class="code-tabs">
+                                <button class="code-tab active" onclick="showCode('curl-image')">cURL</button>
+                                <button class="code-tab" onclick="showCode('js-image')">JavaScript</button>
+                            </div>
+                            <div class="code-content" id="curl-image">
+                                <pre><code>curl -X POST "http://localhost:8091/api/generation/image-to-3d" \
+  -F "image=@/path/to/image.jpg" \
+  -F "quality=high" \
+  -F "format=obj"</code></pre>
+                            </div>
+                            <div class="code-content" id="js-image" style="display: none;">
+                                <pre><code>const formData = new FormData();
+formData.append('image', fileInput.files[0]);
+formData.append('quality', 'high');
+formData.append('format', 'obj');
+
+const response = await fetch('http://localhost:8091/api/generation/image-to-3d', {
+  method: 'POST',
+  body: formData
+});
+
+const result = await response.json();</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务状态 -->
+            <div class="content-section" id="task-status">
+                <div class="api-endpoint">
+                    <div class="endpoint-header">
+                        <div class="endpoint-path">/api/generation/task/{taskId}</div>
+                        <div class="endpoint-method get">GET</div>
+                    </div>
+                    <div class="endpoint-content">
+                        <div class="endpoint-description">
+                            查询指定任务的生成状态和结果。可以实时获取任务进度、预计完成时间等信息。
+                        </div>
+
+                        <h4>路径参数</h4>
+                        <table class="params-table">
+                            <thead>
+                                <tr>
+                                    <th>参数名</th>
+                                    <th>类型</th>
+                                    <th>必填</th>
+                                    <th>说明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>taskId</td>
+                                    <td><span class="param-type">string</span></td>
+                                    <td><span class="param-required">是</span></td>
+                                    <td>任务ID，由生成接口返回</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>响应示例</h4>
+                        <div class="response-example">
+                            <div class="response-status status-200">200 OK</div>
+                            <pre><code>{
+  "code": "0000",
+  "info": "success",
+  "data": {
+    "taskId": "task_123456789",
+    "status": "completed",
+    "progress": 100,
+    "result": {
+      "modelUrl": "https://example.com/models/cat_model.obj",
+      "previewUrl": "https://example.com/previews/cat_preview.jpg",
+      "downloadUrl": "https://example.com/downloads/cat_model.zip"
+    },
+    "createdAt": "2024-01-01T10:00:00Z",
+    "completedAt": "2024-01-01T10:05:00Z"
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 更多API端点... -->
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script>
+        // 侧边栏菜单切换
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuItems = document.querySelectorAll('.menu-item');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 移除所有活动状态
+                    menuItems.forEach(mi => mi.classList.remove('active'));
+                    contentSections.forEach(cs => cs.classList.remove('active'));
+                    
+                    // 添加当前活动状态
+                    this.classList.add('active');
+                    const targetSection = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetSection);
+                    if (targetElement) {
+                        targetElement.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // 代码示例切换
+        function showCode(codeId) {
+            // 隐藏所有代码内容
+            const codeContents = document.querySelectorAll('.code-content');
+            codeContents.forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // 移除所有标签的活动状态
+            const codeTabs = document.querySelectorAll('.code-tab');
+            codeTabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 显示选中的代码内容
+            document.getElementById(codeId).style.display = 'block';
+            
+            // 添加选中标签的活动状态
+            event.target.classList.add('active');
+        }
+
+        // 平滑滚动到锚点
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+    <script src="/js/performance.js"></script>
+    <script src="/js/responsive.js"></script>
+</body>
+</html>

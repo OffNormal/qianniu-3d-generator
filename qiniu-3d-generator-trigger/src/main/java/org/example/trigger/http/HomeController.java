@@ -27,9 +27,49 @@ public class HomeController {
     public String home(Model model) {
         model.addAttribute("title", "七牛云3D模型生成应用");
         model.addAttribute("description", "基于AI的智能3D模型生成平台");
-        model.addAttribute("apiDoc", "/swagger-ui.html");
+        model.addAttribute("apiDoc", "/swagger-ui/index.html");
         model.addAttribute("version", "1.0.0");
         return "index";
+    }
+    
+    /**
+     * 3D模型生成工作台
+     */
+    @GetMapping("/workspace")
+    public String workspace(Model model) {
+        model.addAttribute("title", "3D模型生成工作台");
+        model.addAttribute("description", "智能3D模型生成平台");
+        return "workspace";
+    }
+    
+    /**
+     * 历史记录页面
+     */
+    @GetMapping("/history")
+    public String history(Model model) {
+        model.addAttribute("title", "历史记录");
+        model.addAttribute("description", "查看和管理您的3D模型生成历史");
+        return "history";
+    }
+    
+    /**
+     * 用户中心页面
+     */
+    @GetMapping("/profile")
+    public String profile(Model model) {
+        model.addAttribute("title", "用户中心");
+        model.addAttribute("description", "管理您的个人信息、API设置和账户偏好");
+        return "profile";
+    }
+    
+    /**
+     * API文档页面
+     */
+    @GetMapping("/api-docs")
+    public String apiDocs(Model model) {
+        model.addAttribute("title", "API文档 - 七牛云3D模型生成应用");
+        model.addAttribute("description", "完整的RESTful API接口文档和使用指南");
+        return "api-docs";
     }
     
     /**
@@ -49,7 +89,7 @@ public class HomeController {
             "智能缓存优化",
             "质量评估系统"
         });
-        info.put("apiDoc", "/swagger-ui.html");
+        info.put("apiDoc", "/swagger-ui/index.html");
         info.put("status", "running");
         
         return Response.success(info);

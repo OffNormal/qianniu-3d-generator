@@ -48,6 +48,9 @@ public class GenerationTaskEntity {
     /** 第三方API任务ID */
     private String externalTaskId;
     
+    /** API提供商 */
+    private String apiProvider;
+    
     /** 生成参数（JSON格式） */
     private String generationParams;
     
