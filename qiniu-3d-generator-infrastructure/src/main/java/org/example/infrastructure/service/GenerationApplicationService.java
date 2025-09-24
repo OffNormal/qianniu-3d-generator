@@ -7,10 +7,12 @@ import org.example.domain.generation.model.entity.GenerationTaskEntity;
 import org.example.domain.generation.model.valobj.GenerationRequest;
 import org.example.domain.generation.service.IGenerationService;
 import org.example.infrastructure.gateway.MeshyApiGateway;
+import org.example.infrastructure.gateway.HunyuanApiGateway;
 import org.example.types.common.Response;
 import org.example.types.enums.GenerationType;
 import org.example.types.enums.TaskStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
@@ -19,7 +21,7 @@ import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * ç”Ÿæˆåº”ç”¨æœåŠ¡
+ * Éú³ÉÓ¦ÓÃ·şÎñ
  */
 @Slf4j
 @Service
@@ -35,58 +37,64 @@ public class GenerationApplicationService {
     private MeshyApiGateway meshyApiGateway;
     
     @Resource
+    private HunyuanApiGateway hunyuanApiGateway;
+    
+    @Value("${generation.api.provider:hunyuan}")
+    private String apiProvider;
+    
+    @Resource
     private JdbcTemplate jdbcTemplate;
     
     /**
-     * åˆ›å»ºç”Ÿæˆä»»åŠ¡
+     * ´´½¨Éú³ÉÈÎÎñ
      */
     public Response<String> createGenerationTask(String userId, String inputContent, 
                                                GenerationType type, Map<String, Object> params) {
         try {
-            // æ£€æŸ¥ç¼“å­˜
+            // ¼ì²é»º´æ
             GenerationRequest request = new GenerationRequest();
             request.setInputContent(inputContent);
             request.setGenerationType(type);
-            // request.setParams(params); // æš‚æ—¶æ³¨é‡Šï¼Œéœ€è¦å®ç°å‚æ•°è®¾ç½®
+            // request.setParams(params); // ÔİÊ±×¢ÊÍ£¬ĞèÒªÊµÏÖ²ÎÊıÉèÖÃ
             
             String cacheKey = cacheService.generateCacheKey(request);
             CacheItemEntity cacheItem = cacheService.findCache(request);
             
             if (cacheItem != null) {
-                log.info("å‘½ä¸­ç¼“å­˜ï¼Œç›´æ¥è¿”å›ç»“æœ: {}", cacheKey);
+                log.info("ÃüÖĞ»º´æ£¬Ö±½Ó·µ»Ø½á¹û: {}", cacheKey);
                 return Response.success(cacheItem.getResultUrl());
             }
             
-            // é‡ç”¨å·²åˆ›å»ºçš„ç”Ÿæˆè¯·æ±‚
+            // ÖØÓÃÒÑ´´½¨µÄÉú³ÉÇëÇó
             request.setUserId(userId);
-            // inputContentå’ŒgenerationTypeå·²ç»è®¾ç½®è¿‡äº†
-            // æ³¨æ„ï¼šGenerationRequestä½¿ç”¨GenerationParamsè€Œä¸æ˜¯Map
+            // inputContentºÍgenerationTypeÒÑ¾­ÉèÖÃ¹ıÁË
+            // ×¢Òâ£ºGenerationRequestÊ¹ÓÃGenerationParams¶ø²»ÊÇMap
             
-            // åˆ›å»ºä»»åŠ¡
+            // ´´½¨ÈÎÎñ
             GenerationTaskEntity task = generationService.createTask(request);
             
-            // å¼‚æ­¥æ‰§è¡Œä»»åŠ¡
+            // Òì²½Ö´ĞĞÈÎÎñ
             executeTaskAsync(task.getTaskId());
             
             return Response.success(task.getTaskId());
             
         } catch (Exception e) {
-            log.error("åˆ›å»ºç”Ÿæˆä»»åŠ¡å¤±è´¥", e);
-            return Response.fail("åˆ›å»ºä»»åŠ¡å¤±è´¥: " + e.getMessage());
+            log.error("´´½¨Éú³ÉÈÎÎñÊ§°Ü", e);
+            return Response.fail("´´½¨ÈÎÎñÊ§°Ü: " + e.getMessage());
         }
     }
     
     /**
-     * æŸ¥è¯¢ä»»åŠ¡çŠ¶æ€
+     * ²éÑ¯ÈÎÎñ×´Ì¬
      */
     public Response<GenerationTaskEntity> queryTask(String taskId) {
         try {
             GenerationTaskEntity task = generationService.queryTask(taskId);
             if (task == null) {
-                return Response.fail("ä»»åŠ¡ä¸å­˜åœ¨");
+                return Response.fail("ÈÎÎñ²»´æÔÚ");
             }
             
-            // å¦‚æœä»»åŠ¡æ­£åœ¨å¤„ç†ä¸­ï¼ŒæŸ¥è¯¢å¤–éƒ¨APIçŠ¶æ€
+            // Èç¹ûÈÎÎñÕıÔÚ´¦ÀíÖĞ£¬²éÑ¯Íâ²¿API×´Ì¬
             if (task.getStatus() == TaskStatus.PROCESSING && task.getExternalTaskId() != null) {
                 updateTaskFromExternalApi(task);
             }
@@ -94,13 +102,13 @@ public class GenerationApplicationService {
             return Response.success(task);
             
         } catch (Exception e) {
-            log.error("æŸ¥è¯¢ä»»åŠ¡å¤±è´¥", e);
-            return Response.fail("æŸ¥è¯¢å¤±è´¥: " + e.getMessage());
+            log.error("²éÑ¯ÈÎÎñÊ§°Ü", e);
+            return Response.fail("²éÑ¯Ê§°Ü: " + e.getMessage());
         }
     }
     
     /**
-     * è·å–ç”¨æˆ·ä»»åŠ¡åˆ—è¡¨
+     * »ñÈ¡ÓÃ»§ÈÎÎñÁĞ±í
      */
     public Response<List<GenerationTaskEntity>> getUserTasks(String userId, int limit) {
         try {
@@ -108,13 +116,13 @@ public class GenerationApplicationService {
             return Response.success(tasks);
             
         } catch (Exception e) {
-            log.error("è·å–ç”¨æˆ·ä»»åŠ¡åˆ—è¡¨å¤±è´¥", e);
-            return Response.fail("è·å–å¤±è´¥: " + e.getMessage());
+            log.error("»ñÈ¡ÓÃ»§ÈÎÎñÁĞ±íÊ§°Ü", e);
+            return Response.fail("»ñÈ¡Ê§°Ü: " + e.getMessage());
         }
     }
     
     /**
-     * å–æ¶ˆä»»åŠ¡
+     * È¡ÏûÈÎÎñ
      */
     public Response<Void> cancelTask(String taskId) {
         try {
@@ -122,13 +130,13 @@ public class GenerationApplicationService {
             return Response.success(null);
             
         } catch (Exception e) {
-            log.error("å–æ¶ˆä»»åŠ¡å¤±è´¥", e);
-            return Response.fail("å–æ¶ˆå¤±è´¥: " + e.getMessage());
+            log.error("È¡ÏûÈÎÎñÊ§°Ü", e);
+            return Response.fail("È¡ÏûÊ§°Ü: " + e.getMessage());
         }
     }
     
     /**
-     * å¼‚æ­¥æ‰§è¡Œä»»åŠ¡
+     * Òì²½Ö´ĞĞÈÎÎñ
      */
     private void executeTaskAsync(String taskId) {
         new Thread(() -> {
@@ -138,101 +146,131 @@ public class GenerationApplicationService {
                     generationService.executeTask(task);
                 }
             } catch (Exception e) {
-                log.error("æ‰§è¡Œä»»åŠ¡å¼‚å¸¸: {}", taskId, e);
+                log.error("Ö´ĞĞÈÎÎñÒì³£: {}", taskId, e);
             }
         }).start();
     }
     
     /**
-     * ä»å¤–éƒ¨APIæ›´æ–°ä»»åŠ¡çŠ¶æ€
+     * ´ÓÍâ²¿API¸üĞÂÈÎÎñ×´Ì¬
      */
     private void updateTaskFromExternalApi(GenerationTaskEntity task) {
         try {
-            MeshyApiGateway.TaskResult result = meshyApiGateway.queryTaskStatus(task.getExternalTaskId());
+            Object result = null;
             
-            if (result.isCompleted()) {
-                task.completeProcessing(result.getModelUrl(), result.getModelUrl(), result.getPreviewUrl());
+            // ¸ù¾İÅäÖÃÑ¡ÔñAPIÌá¹©ÉÌ
+            if ("hunyuan".equals(apiProvider)) {
+                HunyuanApiGateway.TaskResult hunyuanResult = hunyuanApiGateway.queryTaskStatus(task.getExternalTaskId());
+                result = hunyuanResult;
                 
-                // ä¿å­˜åˆ°ç¼“å­˜
-                GenerationRequest request = new GenerationRequest();
-                request.setInputContent(task.getInputContent());
-                request.setGenerationType(task.getGenerationType());
+                if (hunyuanResult.isCompleted()) {
+                    task.completeProcessing(hunyuanResult.getModelUrl(), hunyuanResult.getModelUrl(), hunyuanResult.getPreviewUrl());
+                    
+                    // ±£´æµ½»º´æ
+                    saveToCache(task, hunyuanResult.getModelUrl(), hunyuanResult.getPreviewUrl());
+                    
+                } else if (hunyuanResult.isFailed()) {
+                    task.failProcessing(hunyuanResult.getErrorMessage());
+                }
+            } else {
+                // Ä¬ÈÏÊ¹ÓÃMeshy API
+                MeshyApiGateway.TaskResult meshyResult = meshyApiGateway.queryTaskStatus(task.getExternalTaskId());
+                result = meshyResult;
                 
-                String cacheKey = cacheService.generateCacheKey(request);
-                
-                // åˆ›å»ºç¼“å­˜é¡¹
-                CacheItemEntity cacheItem = CacheItemEntity.builder()
-                    .cacheKey(cacheKey)
-                    .inputContent(task.getInputContent())
-                    .generationType(task.getGenerationType())
-                    .resultUrl(result.getModelUrl())
-                    .previewImageUrl(result.getPreviewUrl())
-                    .qualityScore(task.getQualityScore())
-                    .hitCount(0)
-                    .createTime(java.time.LocalDateTime.now())
-                    .build();
-                
-                cacheService.saveCache(cacheItem);
-                
-            } else if (result.isFailed()) {
-                task.failProcessing(result.getErrorMessage());
+                if (meshyResult.isCompleted()) {
+                    task.completeProcessing(meshyResult.getModelUrl(), meshyResult.getModelUrl(), meshyResult.getPreviewUrl());
+                    
+                    // ±£´æµ½»º´æ
+                    saveToCache(task, meshyResult.getModelUrl(), meshyResult.getPreviewUrl());
+                    
+                } else if (meshyResult.isFailed()) {
+                    task.failProcessing(meshyResult.getErrorMessage());
+                }
             }
             
             generationService.update(task);
             
         } catch (Exception e) {
-            log.error("æ›´æ–°ä»»åŠ¡çŠ¶æ€å¤±è´¥: {}", task.getTaskId(), e);
+            log.error("¸üĞÂÈÎÎñ×´Ì¬Ê§°Ü: {}", task.getTaskId(), e);
         }
     }
     
     /**
-     * è§£æå‚æ•°
+     * ±£´æµ½»º´æµÄ¸¨Öú·½·¨
+     */
+    private void saveToCache(GenerationTaskEntity task, String modelUrl, String previewUrl) {
+        try {
+            GenerationRequest request = new GenerationRequest();
+            request.setInputContent(task.getInputContent());
+            request.setGenerationType(task.getGenerationType());
+            
+            String cacheKey = cacheService.generateCacheKey(request);
+            
+            // ´´½¨»º´æÏî
+            CacheItemEntity cacheItem = CacheItemEntity.builder()
+                .cacheKey(cacheKey)
+                .inputContent(task.getInputContent())
+                .generationType(task.getGenerationType())
+                .resultUrl(modelUrl)
+                .previewImageUrl(previewUrl)
+                .qualityScore(task.getQualityScore())
+                .hitCount(0)
+                .createTime(java.time.LocalDateTime.now())
+                .build();
+            
+            cacheService.saveCache(cacheItem);
+        } catch (Exception e) {
+            log.error("±£´æ»º´æÊ§°Ü: {}", task.getTaskId(), e);
+        }
+    }
+    
+    /**
+     * ½âÎö²ÎÊı
      */
     private Map<String, Object> parseParams(String paramsJson) {
-        // ç®€å•å®ç°ï¼Œå®é™…åº”è¯¥ç”¨JSONè§£æ
+        // ¼òµ¥ÊµÏÖ£¬Êµ¼ÊÓ¦¸ÃÓÃJSON½âÎö
         return new HashMap<>();
     }
     
     /**
-     * æ•°æ®åº“åˆå§‹åŒ–
+     * Êı¾İ¿â³õÊ¼»¯
      */
-    public Response<String> initDatabase() {
+    public void initDatabase() {
         try {
-            // åˆ›å»ºgeneration_taskè¡¨
-            String createGenerationTaskTable = "CREATE TABLE IF NOT EXISTS generation_task (" +
-                "task_id VARCHAR(64) PRIMARY KEY COMMENT 'ä»»åŠ¡ID'," +
-                "user_id VARCHAR(64) NOT NULL COMMENT 'ç”¨æˆ·ID'," +
-                "generation_type VARCHAR(20) NOT NULL COMMENT 'ç”Ÿæˆç±»å‹ï¼šTEXT/IMAGE'," +
-                "input_content TEXT NOT NULL COMMENT 'è¾“å…¥å†…å®¹'," +
-                "input_hash VARCHAR(64) NOT NULL COMMENT 'è¾“å…¥å†…å®¹å“ˆå¸Œ'," +
-                "status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT 'ä»»åŠ¡çŠ¶æ€ï¼šPENDING/PROCESSING/COMPLETED/FAILED/CACHED'," +
-                "result_url VARCHAR(500) COMMENT 'ç”Ÿæˆç»“æœURL'," +
-                "model_file_path VARCHAR(500) COMMENT 'æ¨¡å‹æ–‡ä»¶è·¯å¾„'," +
-                "preview_image_url VARCHAR(500) COMMENT 'é¢„è§ˆå›¾URL'," +
-                "external_task_id VARCHAR(100) COMMENT 'ç¬¬ä¸‰æ–¹APIä»»åŠ¡ID'," +
-                "generation_params TEXT COMMENT 'ç”Ÿæˆå‚æ•°JSON'," +
-                "quality_score DECIMAL(3,2) COMMENT 'è´¨é‡è¯„åˆ†(0-10)'," +
-                "user_rating INT COMMENT 'ç”¨æˆ·è¯„åˆ†(1-10)'," +
-                "processing_time BIGINT COMMENT 'å¤„ç†è€—æ—¶(æ¯«ç§’)'," +
-                "error_message TEXT COMMENT 'é”™è¯¯ä¿¡æ¯'," +
-                "from_cache BOOLEAN DEFAULT FALSE COMMENT 'æ˜¯å¦æ¥è‡ªç¼“å­˜'," +
-                "create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'åˆ›å»ºæ—¶é—´'," +
-                "update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'æ›´æ–°æ—¶é—´'," +
-                "complete_time DATETIME COMMENT 'å®Œæˆæ—¶é—´'," +
-                "INDEX idx_user_id (user_id)," +
-                "INDEX idx_status (status)," +
-                "INDEX idx_input_hash (input_hash)," +
-                "INDEX idx_create_time (create_time)," +
-                "INDEX idx_quality_score (quality_score)" +
-                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='ç”Ÿæˆä»»åŠ¡è¡¨'";
+            // ´´½¨generation_task±í
+            String createTableSql = """
+                CREATE TABLE IF NOT EXISTS generation_task (
+                    task_id VARCHAR(64) PRIMARY KEY COMMENT 'ÈÎÎñID',
+                    user_id VARCHAR(64) NOT NULL COMMENT 'ÓÃ»§ID',
+                    generation_type VARCHAR(32) NOT NULL COMMENT 'Éú³ÉÀàĞÍ',
+                    input_content TEXT NOT NULL COMMENT 'ÊäÈëÄÚÈİ',
+                    input_hash VARCHAR(64) NOT NULL COMMENT 'ÊäÈëÄÚÈİ¹şÏ£',
+                    status VARCHAR(32) NOT NULL DEFAULT 'PENDING' COMMENT 'ÈÎÎñ×´Ì¬',
+                    result_url VARCHAR(512) COMMENT '½á¹ûURL',
+                    model_file_path VARCHAR(512) COMMENT 'Ä£ĞÍÎÄ¼şÂ·¾¶',
+                    preview_image_url VARCHAR(512) COMMENT 'Ô¤ÀÀÍ¼Æ¬URL',
+                    external_task_id VARCHAR(128) COMMENT 'Íâ²¿ÈÎÎñID',
+                    generation_params JSON COMMENT 'Éú³É²ÎÊı',
+                    quality_score DECIMAL(3,2) COMMENT 'ÖÊÁ¿ÆÀ·Ö',
+                    user_rating INT COMMENT 'ÓÃ»§ÆÀ·Ö',
+                    processing_time INT COMMENT '´¦ÀíÊ±¼ä(Ãë)',
+                    error_message TEXT COMMENT '´íÎóĞÅÏ¢',
+                    from_cache BOOLEAN DEFAULT FALSE COMMENT 'ÊÇ·ñÀ´×Ô»º´æ',
+                    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '´´½¨Ê±¼ä',
+                    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '¸üĞÂÊ±¼ä',
+                    complete_time TIMESTAMP NULL COMMENT 'Íê³ÉÊ±¼ä',
+                    INDEX idx_user_id (user_id),
+                    INDEX idx_status (status),
+                    INDEX idx_input_hash (input_hash),
+                    INDEX idx_create_time (create_time)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='3DÄ£ĞÍÉú³ÉÈÎÎñ±í'
+                """;
             
-            jdbcTemplate.execute(createGenerationTaskTable);
-            log.info("æ•°æ®åº“è¡¨åˆ›å»ºæˆåŠŸ");
-            return Response.success("æ•°æ®åº“åˆå§‹åŒ–æˆåŠŸ");
-            
+            jdbcTemplate.execute(createTableSql);
+            log.info("Êı¾İ¿â³õÊ¼»¯Íê³É");
         } catch (Exception e) {
-            log.error("æ•°æ®åº“åˆå§‹åŒ–å¤±è´¥", e);
-            return Response.fail("æ•°æ®åº“åˆå§‹åŒ–å¤±è´¥: " + e.getMessage());
+            log.error("Êı¾İ¿â³õÊ¼»¯Ê§°Ü", e);
+            throw new RuntimeException("Êı¾İ¿â³õÊ¼»¯Ê§°Ü", e);
         }
     }
 }

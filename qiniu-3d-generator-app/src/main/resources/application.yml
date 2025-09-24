@@ -11,12 +11,12 @@ spring:
   profiles:
     active: dev
   
-  # æ•°æ®æºé…ç½®
+  # Êı¾İÔ´ÅäÖÃ
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/qiniu_3d_generator?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/mysql?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
     username: root
-    password: 123456
+    password:
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -24,7 +24,7 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
   
-  # Redisé…ç½®
+  # RedisÅäÖÃ
   redis:
     host: localhost
     port: 6379
@@ -38,13 +38,13 @@ spring:
         min-idle: 5
         max-wait: 5000ms
   
-  # Jacksoné…ç½®
+  # JacksonÅäÖÃ
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
     default-property-inclusion: non_null
 
-# MyBatisé…ç½®
+# MyBatisÅäÖÃ
 mybatis:
   mapper-locations: classpath:mybatis/mapper/*.xml
   type-aliases-package: org.example.infrastructure.persistent.po
@@ -54,13 +54,24 @@ mybatis:
     lazy-loading-enabled: true
     multiple-result-sets-enabled: true
 
-# ç¬¬ä¸‰æ–¹APIé…ç½®
+# µÚÈı·½APIÅäÖÃ
 meshy:
   api:
     url: https://api.meshy.ai
     key: ${MESHY_API_KEY:your_meshy_api_key_here}
 
-# æ—¥å¿—é…ç½®
+# »ìÔª3D APIÅäÖÃ
+hunyuan:
+  api:
+    url: http://localhost:7860
+    key: ${HUNYUAN_API_KEY:}
+
+# Éú³ÉÅäÖÃ
+generation:
+  api:
+    provider: hunyuan  # ¿ÉÑ¡Öµ: hunyuan, meshy
+
+# ÈÕÖ¾ÅäÖÃ
 logging:
   level:
     org.example: INFO
@@ -70,27 +81,27 @@ logging:
   file:
     name: logs/qiniu-3d-generator.log
 
-# åº”ç”¨è‡ªå®šä¹‰é…ç½®
+# Ó¦ÓÃ×Ô¶¨ÒåÅäÖÃ
 app:
-  # ç¼“å­˜é…ç½®
+  # »º´æÅäÖÃ
   cache:
-    default-expire-hours: 168  # 7å¤©
+    default-expire-hours: 168  # 7Ìì
     max-cache-size: 10000
-    cleanup-interval: 3600000  # 1å°æ—¶
+    cleanup-interval: 3600000  # 1Ğ¡Ê±
   
-  # è¯„ä¼°é…ç½®
+  # ÆÀ¹ÀÅäÖÃ
   evaluation:
     auto-evaluate: true
     batch-size: 10
     quality-threshold: 7.0
   
-  # æ–‡ä»¶å­˜å‚¨é…ç½®
+  # ÎÄ¼ş´æ´¢ÅäÖÃ
   storage:
     base-path: /data/3d-models
     max-file-size: 100MB
     allowed-formats: obj,fbx,gltf,glb
   
-  # é™æµé…ç½®
+  # ÏŞÁ÷ÅäÖÃ
   rate-limit:
     enabled: true
     requests-per-minute: 60

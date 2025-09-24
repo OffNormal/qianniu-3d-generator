@@ -5,7 +5,9 @@ import org.example.domain.generation.model.entity.GenerationTaskEntity;
 import org.example.domain.generation.model.valobj.GenerationRequest;
 import org.example.domain.generation.repository.IGenerationRepository;
 import org.example.domain.generation.service.IGenerationService;
+import org.example.types.enums.GenerationType;
 import org.example.types.enums.TaskStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -14,20 +16,23 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * ç”ŸæˆæœåŠ¡å®ç°
+ * Éú³É·şÎñÊµÏÖ
  */
 @Slf4j
 @Service
 public class GenerationServiceImpl implements IGenerationService {
-    
-    @Resource
-    private IGenerationRepository generationRepository;
+
+    private final IGenerationRepository generationRepository;
+
+    public GenerationServiceImpl(IGenerationRepository generationRepository) {
+        this.generationRepository = generationRepository;
+    }
     
     @Override
     public GenerationTaskEntity createTask(GenerationRequest request) {
-        log.info("åˆ›å»ºç”Ÿæˆä»»åŠ¡: userId={}, type={}", request.getUserId(), request.getGenerationType());
+        log.info("´´½¨Éú³ÉÈÎÎñ: userId={}, type={}", request.getUserId(), request.getGenerationType());
         
-        // åˆ›å»ºä»»åŠ¡å®ä½“
+        // ´´½¨ÈÎÎñÊµÌå
         GenerationTaskEntity task = new GenerationTaskEntity();
         task.setTaskId(UUID.randomUUID().toString());
         task.setUserId(request.getUserId());
@@ -38,91 +43,93 @@ public class GenerationServiceImpl implements IGenerationService {
         task.setCreateTime(LocalDateTime.now());
         task.setUpdateTime(LocalDateTime.now());
         
-        // è®¾ç½®ç”Ÿæˆå‚æ•°
+        // ÉèÖÃÉú³É²ÎÊı
         if (request.getParams() != null) {
             task.setGenerationParams(request.getParams().toString());
         }
         
-        // ä¿å­˜ä»»åŠ¡
+        // ±£´æÈÎÎñ
         generationRepository.save(task);
         
-        log.info("ä»»åŠ¡åˆ›å»ºæˆåŠŸ: taskId={}", task.getTaskId());
+        log.info("ÈÎÎñ´´½¨³É¹¦: taskId={}", task.getTaskId());
         return task;
     }
     
     @Override
-    public GenerationTaskEntity executeTask(GenerationTaskEntity taskEntity) {
-        log.info("æ‰§è¡Œç”Ÿæˆä»»åŠ¡: taskId={}", taskEntity.getTaskId());
-        
+    public GenerationTaskEntity executeTask(GenerationTaskEntity task) {
         try {
-            // æ›´æ–°çŠ¶æ€ä¸ºå¤„ç†ä¸­
-            taskEntity.setStatus(TaskStatus.PROCESSING);
-            taskEntity.setUpdateTime(LocalDateTime.now());
-            generationRepository.update(taskEntity);
+            // ¸üĞÂÈÎÎñ×´Ì¬Îª´¦ÀíÖĞ
+            task.setStatus(TaskStatus.PROCESSING);
+            generationRepository.update(task);
             
-            log.info("ä»»åŠ¡çŠ¶æ€å·²æ›´æ–°ä¸ºå¤„ç†ä¸­: taskId={}", taskEntity.getTaskId());
+            log.info("ÈÎÎñÖ´ĞĞ¿ªÊ¼£¬ÈÎÎñID: {}", task.getTaskId());
+            
+            // ÕâÀïÖ»¸üĞÂ×´Ì¬£¬Êµ¼ÊµÄAPIµ÷ÓÃ½«ÔÚÓ¦ÓÃ²ã´¦Àí
             
         } catch (Exception e) {
-            log.error("æ‰§è¡Œä»»åŠ¡å¤±è´¥: taskId={}", taskEntity.getTaskId(), e);
-            taskEntity.failProcessing("æ‰§è¡Œä»»åŠ¡å¼‚å¸¸: " + e.getMessage());
-            generationRepository.update(taskEntity);
+            log.error("ÈÎÎñÖ´ĞĞÊ§°Ü£¬ÈÎÎñID: {}", task.getTaskId(), e);
+            task.setStatus(TaskStatus.FAILED);
+            task.setErrorMessage(e.getMessage());
+            generationRepository.update(task);
         }
-        
-        return taskEntity;
+        return task;
     }
     
+    /**
+     * µ÷ÓÃÍâ²¿API´´½¨ÈÎÎñ
+     */
     @Override
     public GenerationTaskEntity queryTask(String taskId) {
-        log.debug("æŸ¥è¯¢ä»»åŠ¡: taskId={}", taskId);
+        log.debug("²éÑ¯ÈÎÎñ: taskId={}", taskId);
         return generationRepository.findByTaskId(taskId);
     }
     
     @Override
     public boolean cancelTask(String taskId) {
-        log.info("å–æ¶ˆä»»åŠ¡: taskId={}", taskId);
+        log.info("È¡ÏûÈÎÎñ: taskId={}", taskId);
         
         try {
             GenerationTaskEntity task = generationRepository.findByTaskId(taskId);
             if (task == null) {
-                log.warn("ä»»åŠ¡ä¸å­˜åœ¨: taskId={}", taskId);
+                log.warn("ÈÎÎñ²»´æÔÚ: taskId={}", taskId);
                 return false;
             }
             
             if (task.getStatus() == TaskStatus.COMPLETED || task.getStatus() == TaskStatus.FAILED) {
-                log.warn("ä»»åŠ¡å·²å®Œæˆæˆ–å¤±è´¥ï¼Œæ— æ³•å–æ¶ˆ: taskId={}, status={}", taskId, task.getStatus());
+                log.warn("ÈÎÎñÒÑÍê³É»òÊ§°Ü£¬ÎŞ·¨È¡Ïû: taskId={}, status={}", taskId, task.getStatus());
                 return false;
             }
             
-            // å¦‚æœæœ‰å¤–éƒ¨ä»»åŠ¡IDï¼Œè®°å½•æ—¥å¿—
+            // Èç¹ûÓĞÍâ²¿ÈÎÎñID£¬¼ÇÂ¼ÈÕÖ¾
             if (task.getExternalTaskId() != null) {
-                log.info("ä»»åŠ¡æœ‰å¤–éƒ¨ä»»åŠ¡ID: externalTaskId={}", task.getExternalTaskId());
+                log.info("ÈÎÎñÓĞÍâ²¿ÈÎÎñID: externalTaskId={}", task.getExternalTaskId());
             }
             
-            // æ›´æ–°ä»»åŠ¡çŠ¶æ€ä¸ºå¤±è´¥ï¼ˆå–æ¶ˆï¼‰
+            // ¸üĞÂÈÎÎñ×´Ì¬ÎªÊ§°Ü£¨È¡Ïû£©
             task.setStatus(TaskStatus.FAILED);
-            task.setErrorMessage("ä»»åŠ¡å·²è¢«ç”¨æˆ·å–æ¶ˆ");
+            task.setErrorMessage("ÈÎÎñÒÑ±»ÓÃ»§È¡Ïû");
             task.setUpdateTime(LocalDateTime.now());
             generationRepository.update(task);
             
-            log.info("ä»»åŠ¡å–æ¶ˆæˆåŠŸ: taskId={}", taskId);
+            log.info("ÈÎÎñÈ¡Ïû³É¹¦: taskId={}", taskId);
             return true;
             
         } catch (Exception e) {
-            log.error("å–æ¶ˆä»»åŠ¡å¤±è´¥: taskId={}", taskId, e);
+            log.error("È¡ÏûÈÎÎñÊ§°Ü: taskId={}", taskId, e);
             return false;
         }
     }
     
     @Override
     public GenerationTaskEntity save(GenerationTaskEntity task) {
-        log.debug("ä¿å­˜ä»»åŠ¡: taskId={}", task.getTaskId());
+        log.debug("±£´æÈÎÎñ: taskId={}", task.getTaskId());
         generationRepository.save(task);
         return task;
     }
     
     @Override
     public GenerationTaskEntity update(GenerationTaskEntity task) {
-        log.debug("æ›´æ–°ä»»åŠ¡: taskId={}", task.getTaskId());
+        log.debug("¸üĞÂÈÎÎñ: taskId={}", task.getTaskId());
         task.setUpdateTime(LocalDateTime.now());
         generationRepository.update(task);
         return task;
@@ -130,14 +137,14 @@ public class GenerationServiceImpl implements IGenerationService {
     
     @Override
     public List<GenerationTaskEntity> queryUserTasks(String userId, int limit) {
-        log.debug("æŸ¥è¯¢ç”¨æˆ·ä»»åŠ¡åˆ—è¡¨: userId={}, limit={}", userId, limit);
+        log.debug("²éÑ¯ÓÃ»§ÈÎÎñÁĞ±í: userId={}, limit={}", userId, limit);
         return generationRepository.findByUserId(userId, limit);
     }
     
 
     
     /**
-     * è®¡ç®—è¾“å…¥å“ˆå¸Œ
+     * ¼ÆËãÊäÈë¹şÏ£
      */
     private String calculateInputHash(String inputContent) {
         try {
@@ -149,7 +156,7 @@ public class GenerationServiceImpl implements IGenerationService {
             }
             return sb.toString();
         } catch (Exception e) {
-            log.warn("è®¡ç®—è¾“å…¥å“ˆå¸Œå¤±è´¥", e);
+            log.warn("¼ÆËãÊäÈë¹şÏ£Ê§°Ü", e);
             return String.valueOf(inputContent.hashCode());
         }
     }
