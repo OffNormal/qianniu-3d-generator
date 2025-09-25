@@ -7,7 +7,8 @@ import org.example.domain.generation.model.entity.GenerationTaskEntity;
 import org.example.domain.generation.model.valobj.GenerationRequest;
 import org.example.domain.generation.service.IGenerationService;
 import org.example.infrastructure.gateway.ApiProviderFactory;
-import org.example.infrastructure.gateway.MeshyApiGateway;
+// 注释掉Meshy相关的导入
+// import org.example.infrastructure.gateway.MeshyApiGateway;
 import org.example.infrastructure.gateway.HunyuanApiGateway;
 import org.example.types.common.Response;
 import org.example.types.enums.GenerationType;
@@ -22,7 +23,7 @@ import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * 生成应用服务
+ * 生成应用服务 - 只保留腾讯混元API
  */
 @Slf4j
 @Service
@@ -78,9 +79,9 @@ public class GenerationApplicationService {
             
             // 如果指定了API提供商，设置到任务中
             if (apiProvider != null && !apiProvider.trim().isEmpty()) {
-                // 验证API提供商是否可用
+                // 验证API提供商是否可用（只支持腾讯混元）
                 if (!Arrays.asList(apiProviderFactory.getAvailableProviders()).contains(apiProvider)) {
-                    return Response.fail("不支持的API提供商: " + apiProvider);
+                    return Response.fail("不支持的API提供商: " + apiProvider + "，当前只支持腾讯混元(hunyuan)");
                 }
                 task.setApiProvider(apiProvider);
                 generationService.update(task);
@@ -175,12 +176,17 @@ public class GenerationApplicationService {
     }
     
     /**
-     * 调用外部API
+     * 调用外部API - 只支持腾讯混元
      */
     private void callExternalApi(GenerationTaskEntity task) {
         try {
             String externalTaskId;
             String provider = task.getApiProvider() != null ? task.getApiProvider() : apiProviderFactory.getDefaultProvider();
+            
+            // 确保只使用腾讯混元API
+            if (!"hunyuan".equals(provider)) {
+                throw new IllegalArgumentException("不支持的API提供商: " + provider + "，当前只支持腾讯混元(hunyuan)");
+            }
             
             // 根据生成类型调用不同的API
             if (task.getGenerationType() == GenerationType.TEXT_TO_3D) {
@@ -202,6 +208,8 @@ public class GenerationApplicationService {
         } catch (Exception e) {
             log.error("调用外部API失败: taskId={}", task.getTaskId(), e);
             
+            // 注释掉备用API逻辑，因为只有腾讯混元一个提供商
+            /*
             // 如果启用了fallback，尝试备用提供商
             if (apiProviderFactory.isFallbackEnabled()) {
                 try {
@@ -231,11 +239,15 @@ public class GenerationApplicationService {
                 task.failProcessing("外部API调用失败: " + e.getMessage());
                 generationService.update(task);
             }
+            */
+            
+            task.failProcessing("外部API调用失败: " + e.getMessage());
+            generationService.update(task);
         }
     }
     
     /**
-     * 从外部API更新任务状态
+     * 从外部API更新任务状态 - 只支持腾讯混元
      */
     private void updateTaskFromExternalApi(GenerationTaskEntity task) {
         try {
@@ -248,7 +260,9 @@ public class GenerationApplicationService {
             String previewUrl = null;
             String errorMessage = null;
             
-            // 根据不同的API提供商处理结果
+            // 只处理腾讯混元API的结果
+            // 注释掉Meshy相关的处理逻辑
+            /*
             if ("meshy".equals(provider) && result instanceof MeshyApiGateway.TaskResult) {
                 MeshyApiGateway.TaskResult meshyResult = (MeshyApiGateway.TaskResult) result;
                 isCompleted = meshyResult.isCompleted();
@@ -256,13 +270,18 @@ public class GenerationApplicationService {
                 modelUrl = meshyResult.getModelUrl();
                 previewUrl = meshyResult.getPreviewUrl();
                 errorMessage = meshyResult.getErrorMessage();
-            } else if ("hunyuan".equals(provider) && result instanceof HunyuanApiGateway.TaskResult) {
+            } else 
+            */
+            if ("hunyuan".equals(provider) && result instanceof HunyuanApiGateway.TaskResult) {
                 HunyuanApiGateway.TaskResult hunyuanResult = (HunyuanApiGateway.TaskResult) result;
                 isCompleted = hunyuanResult.isCompleted();
                 isFailed = hunyuanResult.isFailed();
                 modelUrl = hunyuanResult.getModelUrl();
                 previewUrl = hunyuanResult.getPreviewUrl();
                 errorMessage = hunyuanResult.getErrorMessage();
+            } else {
+                log.warn("不支持的API提供商或结果类型: provider={}, resultType={}", provider, result.getClass().getSimpleName());
+                return;
             }
             
             if (isCompleted) {
@@ -309,7 +328,7 @@ public class GenerationApplicationService {
     }
     
     /**
-     * 获取可用的API提供商信息
+     * 获取可用的API提供商信息 - 只返回腾讯混元
      */
     public Response<Map<String, Object>> getApiProviders() {
         try {

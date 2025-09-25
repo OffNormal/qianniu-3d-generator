@@ -39,6 +39,18 @@ public class HunyuanResponse {
         private String requestId;
         
         /**
+         * 任务状态
+         */
+        @JsonProperty("Status")
+        private String status;
+        
+        /**
+         * 结果文件URL
+         */
+        @JsonProperty("ResultUrl")
+        private String resultUrl;
+        
+        /**
          * 错误信息（如果有）
          */
         @JsonProperty("Error")

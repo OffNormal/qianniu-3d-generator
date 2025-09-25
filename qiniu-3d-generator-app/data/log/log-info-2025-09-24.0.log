@@ -1,0 +1,164 @@
+25-09-24.19:28:34.207 [main            ] INFO  Application            - Starting Application using Java 17.0.12 on 徐森森的PC with PID 34392 (D:\qiniuCloud\qiniu-3d-generator\qiniu-3d-generator-app\target\classes started by xhs20 in D:\qiniuCloud\qiniu-3d-generator\qiniu-3d-generator-app)
+25-09-24.19:28:34.215 [main            ] INFO  Application            - The following 1 profile is active: "dev"
+25-09-24.19:28:35.352 [main            ] INFO  Http11NioProtocol      - Initializing ProtocolHandler ["http-nio-8091"]
+25-09-24.19:28:35.352 [main            ] INFO  StandardService        - Starting service [Tomcat]
+25-09-24.19:28:35.353 [main            ] INFO  StandardEngine         - Starting Servlet engine: [Apache Tomcat/9.0.75]
+25-09-24.19:28:35.473 [main            ] INFO  [/]                    - Initializing Spring embedded WebApplicationContext
+25-09-24.19:28:35.652 [main            ] INFO  HikariDataSource       - HikariPool-1 - Starting...
+25-09-24.19:28:35.799 [main            ] INFO  HikariDataSource       - HikariPool-1 - Start completed.
+25-09-24.19:28:36.952 [main            ] INFO  Http11NioProtocol      - Starting ProtocolHandler ["http-nio-8091"]
+25-09-24.19:28:36.989 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-24.19:28:36.991 [main            ] INFO  Application            - Started Application in 3.289 seconds (JVM running for 3.661)
+25-09-24.19:28:36.994 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-24.19:28:36.994 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-24.19:28:36.994 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成
+25-09-24.19:28:53.135 [http-nio-8091-exec-2] INFO  [/]                    - Initializing Spring DispatcherServlet 'dispatcherServlet'
+25-09-24.19:28:58.095 [http-nio-8091-exec-9] INFO  HunyuanServiceImpl     - 提交腾讯混元3D任务，请求参数: {"Prompt":"猫咪","ResultFormat":"obj","EnablePBR":false}
+25-09-24.19:28:59.462 [http-nio-8091-exec-9] INFO  HunyuanServiceImpl     - 腾讯混元3D任务提交响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`SubmitHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"2b693dbb-5a7e-4904-83e9-859da25c67b4"}}
+25-09-24.19:29:01.596 [http-nio-8091-exec-2] INFO  HunyuanServiceImpl     - 查询腾讯混元3D任务状态，任务ID: undefined
+25-09-24.19:29:01.652 [http-nio-8091-exec-2] INFO  HunyuanServiceImpl     - 腾讯混元3D任务状态查询响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`DescribeHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"48e48dc1-6d18-4674-8302-f1456ed7bf13"}}
+25-09-24.19:29:16.237 [http-nio-8091-exec-3] INFO  HunyuanServiceImpl     - 查询腾讯混元3D任务状态，任务ID: undefined
+25-09-24.19:29:16.410 [http-nio-8091-exec-3] INFO  HunyuanServiceImpl     - 腾讯混元3D任务状态查询响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`DescribeHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"76a73d36-c7fb-41e2-abe9-138d168b6ec7"}}
+25-09-24.19:29:23.236 [http-nio-8091-exec-4] INFO  HunyuanServiceImpl     - 查询腾讯混元3D任务状态，任务ID: undefined
+25-09-24.19:29:23.421 [http-nio-8091-exec-4] INFO  HunyuanServiceImpl     - 腾讯混元3D任务状态查询响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`DescribeHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"bc937dd1-4084-4afc-9449-e0538b6f9a96"}}
+25-09-24.19:29:31.880 [http-nio-8091-exec-6] INFO  HunyuanServiceImpl     - 查询腾讯混元3D任务状态，任务ID: undefined
+25-09-24.19:29:32.055 [http-nio-8091-exec-6] INFO  HunyuanServiceImpl     - 腾讯混元3D任务状态查询响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`DescribeHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"a37ed29d-fb63-4f11-8f32-ea9ffe4a69fc"}}
+25-09-24.19:29:35.079 [http-nio-8091-exec-5] INFO  HunyuanServiceImpl     - 查询腾讯混元3D任务状态，任务ID: undefined
+25-09-24.19:29:35.136 [http-nio-8091-exec-5] INFO  HunyuanServiceImpl     - 腾讯混元3D任务状态查询响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`DescribeHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"292396ae-640a-4215-a52a-9066ec5de2cf"}}
+25-09-24.19:29:39.415 [http-nio-8091-exec-1] INFO  HunyuanServiceImpl     - 查询腾讯混元3D任务状态，任务ID: undefined
+25-09-24.19:29:39.462 [http-nio-8091-exec-1] INFO  HunyuanServiceImpl     - 腾讯混元3D任务状态查询响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`DescribeHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"eb7426f3-fe29-4b08-bf09-a25f2c6ba166"}}
+25-09-24.19:29:41.808 [http-nio-8091-exec-7] INFO  HunyuanServiceImpl     - 查询腾讯混元3D任务状态，任务ID: undefined
+25-09-24.19:29:41.865 [http-nio-8091-exec-7] INFO  HunyuanServiceImpl     - 腾讯混元3D任务状态查询响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`DescribeHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"552fce3f-5e68-4b71-90a3-6aafc5b3654e"}}
+25-09-24.19:29:54.957 [http-nio-8091-exec-2] INFO  HunyuanServiceImpl     - 查询腾讯混元3D任务状态，任务ID: undefined
+25-09-24.19:29:55.131 [http-nio-8091-exec-2] INFO  HunyuanServiceImpl     - 腾讯混元3D任务状态查询响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`DescribeHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"e720d214-e194-4ba4-a649-a1599f13c621"}}
+25-09-24.19:30:10.672 [http-nio-8091-exec-5] INFO  HunyuanServiceImpl     - 查询腾讯混元3D任务状态，任务ID: undefined
+25-09-24.19:30:10.813 [http-nio-8091-exec-5] INFO  HunyuanServiceImpl     - 腾讯混元3D任务状态查询响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`DescribeHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"c2c61ad9-abb3-4c8b-8dad-10b3fc122c07"}}
+25-09-24.19:30:10.829 [http-nio-8091-exec-1] INFO  HunyuanServiceImpl     - 查询腾讯混元3D任务状态，任务ID: undefined
+25-09-24.19:30:10.875 [http-nio-8091-exec-1] INFO  HunyuanServiceImpl     - 腾讯混元3D任务状态查询响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`DescribeHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"07bb6bd2-9427-4556-b1f0-20a62a4ea1c3"}}
+25-09-24.19:30:13.614 [http-nio-8091-exec-7] INFO  HunyuanServiceImpl     - 查询腾讯混元3D任务状态，任务ID: undefined
+25-09-24.19:30:13.659 [http-nio-8091-exec-7] INFO  HunyuanServiceImpl     - 腾讯混元3D任务状态查询响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`DescribeHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"1a2e6d20-6b1f-4a7c-860f-0fd3adda61f9"}}
+25-09-24.19:30:37.847 [http-nio-8091-exec-5] ERROR HunyuanServiceImpl     - 提交腾讯混元3D任务失败
+java.lang.IllegalArgumentException: 提示词不能为空
+	at org.example.infrastructure.service.impl.HunyuanServiceImpl.validateRequest(HunyuanServiceImpl.java:100)
+	at org.example.infrastructure.service.impl.HunyuanServiceImpl.submitHunyuanTo3DJob(HunyuanServiceImpl.java:42)
+	at org.example.trigger.http.HunyuanController.imageTo3D(HunyuanController.java:74)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:205)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:150)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:895)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:808)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1072)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:965)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:909)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:555)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:623)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:209)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.servlet.resource.ResourceUrlEncodingFilter.doFilter(ResourceUrlEncodingFilter.java:67)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:481)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:130)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:343)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:390)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:926)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1791)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+25-09-24.19:30:37.850 [http-nio-8091-exec-5] ERROR HunyuanController      - 图片生成3D任务提交失败
+java.lang.RuntimeException: 提交腾讯混元3D任务失败: 提示词不能为空
+	at org.example.infrastructure.service.impl.HunyuanServiceImpl.submitHunyuanTo3DJob(HunyuanServiceImpl.java:61)
+	at org.example.trigger.http.HunyuanController.imageTo3D(HunyuanController.java:74)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:205)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:150)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:895)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:808)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1072)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:965)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:909)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:555)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:623)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:209)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.servlet.resource.ResourceUrlEncodingFilter.doFilter(ResourceUrlEncodingFilter.java:67)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:481)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:130)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:343)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:390)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:926)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1791)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.base/java.lang.Thread.run(Thread.java:842)
+Caused by: java.lang.IllegalArgumentException: 提示词不能为空
+	at org.example.infrastructure.service.impl.HunyuanServiceImpl.validateRequest(HunyuanServiceImpl.java:100)
+	at org.example.infrastructure.service.impl.HunyuanServiceImpl.submitHunyuanTo3DJob(HunyuanServiceImpl.java:42)
+	... 54 common frames omitted
+25-09-24.19:35:00.184 [http-nio-8091-exec-8] INFO  HunyuanServiceImpl     - 提交腾讯混元3D任务，请求参数: {"Prompt":"猫咪","ResultFormat":"obj","EnablePBR":false}
+25-09-24.19:35:00.884 [http-nio-8091-exec-8] INFO  HunyuanServiceImpl     - 腾讯混元3D任务提交响应: {"Response":{"Error":{"Code":"InvalidAction","Message":"The request action=`SubmitHunyuanTo3DJob` is invalid or not found in service=`ai3d` and version=`2022-07-01`."},"RequestId":"ff05d089-af3e-4405-a64a-5bf5a2040fe7"}}
+25-09-24.20:28:37.001 [scheduling-1    ] INFO  CacheApplicationService - 开始定时清理过期缓存
+25-09-24.20:28:37.002 [scheduling-1    ] INFO  CacheRepositoryImpl    - 删除过期缓存项数量: 0
+25-09-24.20:28:37.002 [scheduling-1    ] INFO  CacheServiceImpl       - 过期缓存清理完成，清理数量: 0
+25-09-24.20:28:37.003 [scheduling-1    ] INFO  CacheApplicationService - 定时清理过期缓存完成

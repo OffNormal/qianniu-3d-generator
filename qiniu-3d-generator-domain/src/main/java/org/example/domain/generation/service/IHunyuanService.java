@@ -22,7 +22,7 @@ public interface IHunyuanService {
      * @param jobId 任务ID
      * @return 任务状态信息
      */
-    Object queryJobStatus(String jobId);
+    HunyuanResponse queryJobStatus(String jobId);
     
     /**
      * 验证请求参数

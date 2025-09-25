@@ -18,6 +18,11 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
+        <!-- 腾讯云混元SDK -->
+    <dependency>
+        <groupId>com.tencentcloudapi</groupId>
+        <artifactId>tencentcloud-sdk-java-hunyuan</artifactId>
+    </dependency>
         <!-- 系统模块 -->
         <dependency>
             <groupId>org.example</groupId>

@@ -54,17 +54,22 @@ mybatis:
     lazy-loading-enabled: true
     multiple-result-sets-enabled: true
 
-# 第三方API配置
-meshy:
-  api:
-    url: https://api.meshy.ai
-    key: ${MESHY_API_KEY:your_meshy_api_key_here}
+# 注释掉Meshy API配置 - 只保留腾讯混元API
+# meshy:
+#   api:
+#     url: https://api.meshy.ai
+#     key: ${MESHY_API_KEY:your_meshy_api_key_here}
 
 # 腾讯云API配置
+# 请设置环境变量或在此处配置您的腾讯云密钥
+# 环境变量方式（推荐）：
+# export TENCENT_SECRET_ID=your_secret_id_here
+# export TENCENT_SECRET_KEY=your_secret_key_here
+# export TENCENT_REGION=ap-beijing
 tencent:
   cloud:
-    secret-id: ${TENCENT_SECRET_ID:AKIDeFlBRWP6arwoTxW2bDDB4nLeksqcYyFL}
-    secret-key: ${TENCENT_SECRET_KEY:2sWyNbuAWo8SesKgu7FRVRl6MVXTHxW3}
+    secret-id: ${TENCENT_SECRET_ID:}
+    secret-key: ${TENCENT_SECRET_KEY:}
     region: ${TENCENT_REGION:ap-beijing}
     hunyuan:
       endpoint: ai3d.tencentcloudapi.com
@@ -74,20 +79,14 @@ tencent:
       enable-pbr: false
       default-format: OBJ
 
-# 混元API配置（用于代码中的@Value注解）
-hunyuan:
-  api:
-    url: https://hunyuan.tencentcloudapi.com
-    secret-id: ${TENCENT_SECRET_ID:AKIDeFlBRWP6arwoTxW2bDDB4nLeksqcYyFL}
-    secret-key: ${TENCENT_SECRET_KEY:2sWyNbuAWo8SesKgu7FRVRl6MVXTHxW3}
-    region: ${TENCENT_REGION:ap-beijing}
-
-# API提供商配置
+# API提供商配置 - 只保留腾讯混元
 api:
   provider:
-    default: meshy  # 默认使用meshy，可选: meshy, hunyuan
-    fallback: hunyuan  # 备用API
-    enable-fallback: true
+    default: hunyuan  # 默认使用腾讯混元
+    # 注释掉备用API配置，因为只有一个提供商
+    # fallback: hunyuan  # 备用API
+    # enable-fallback: true
+    enable-fallback: false
 
 # 日志配置
 logging:

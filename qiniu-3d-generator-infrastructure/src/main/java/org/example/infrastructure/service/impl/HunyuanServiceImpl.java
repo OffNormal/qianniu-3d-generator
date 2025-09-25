@@ -1,17 +1,21 @@
 package org.example.infrastructure.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.tencentcloudapi.common.Credential;
+import com.tencentcloudapi.common.profile.ClientProfile;
+import com.tencentcloudapi.common.profile.HttpProfile;
 import org.example.infrastructure.config.TencentCloudConfig;
 import org.example.domain.generation.service.IHunyuanService;
 import org.example.types.model.HunyuanRequest;
 import org.example.types.model.HunyuanResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -19,74 +23,226 @@ import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-/**
- * 腾讯混元3D服务实现类
- */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class HunyuanServiceImpl implements IHunyuanService {
+
+    private static final Logger logger = LoggerFactory.getLogger(HunyuanServiceImpl.class);
+
+    @Autowired
+    private TencentCloudConfig tencentCloudConfig;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private Credential credential;
+    private ClientProfile clientProfile;
     
-    private final TencentCloudConfig tencentCloudConfig;
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
-    
-    private static final String ALGORITHM = "TC3-HMAC-SHA256";
-    private static final String SERVICE = "ai3d";
-    private static final String ACTION = "SubmitHunyuanTo3DJob";
+    @PostConstruct
+    public void init() {
+        try {
+            // 初始化认证信息
+            this.credential = new Credential(
+                tencentCloudConfig.getSecretId(),
+                tencentCloudConfig.getSecretKey()
+            );
+
+            // 配置HTTP Profile
+            HttpProfile httpProfile = new HttpProfile();
+            httpProfile.setEndpoint(tencentCloudConfig.getHunyuan().getEndpoint());
+            httpProfile.setConnTimeout(tencentCloudConfig.getHunyuan().getTimeout());
+            httpProfile.setReadTimeout(tencentCloudConfig.getHunyuan().getTimeout());
+
+            // 配置Client Profile
+            this.clientProfile = new ClientProfile();
+            clientProfile.setHttpProfile(httpProfile);
+
+            logger.info("Hunyuan Service initialized successfully with endpoint: {}", 
+                       tencentCloudConfig.getHunyuan().getEndpoint());
+        } catch (Exception e) {
+            logger.error("Failed to initialize Hunyuan Service", e);
+            throw new RuntimeException("Failed to initialize Hunyuan Service", e);
+        }
+    }
     
     @Override
     public HunyuanResponse submitHunyuanTo3DJob(HunyuanRequest request) {
         try {
             // 验证请求参数
             validateRequest(request);
+
+            // 构建请求体
+            Map<String, Object> requestBody = new HashMap<>();
             
-            // 构建请求
-            String url = "https://" + tencentCloudConfig.getHunyuan().getEndpoint();
-            HttpHeaders headers = buildHeaders(request);
-            HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(request), headers);
+            if (request.getPrompt() != null) {
+                requestBody.put("Prompt", request.getPrompt());
+            }
             
-            log.info("提交腾讯混元3D任务，请求参数: {}", objectMapper.writeValueAsString(request));
+            if (request.getImageBase64() != null) {
+                requestBody.put("ImageBase64", request.getImageBase64());
+            }
             
-            // 发送请求
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+            if (request.getImageUrl() != null) {
+                requestBody.put("ImageUrl", request.getImageUrl());
+            }
             
-            log.info("腾讯混元3D任务提交响应: {}", response.getBody());
+            if (request.getMultiViewImages() != null && !request.getMultiViewImages().isEmpty()) {
+                List<Map<String, String>> viewImages = new ArrayList<>();
+                for (HunyuanRequest.ViewImage img : request.getMultiViewImages()) {
+                    Map<String, String> viewImage = new HashMap<>();
+                    if (img.getImageBase64() != null) {
+                        viewImage.put("ImageBase64", img.getImageBase64());
+                    }
+                    if (img.getImageUrl() != null) {
+                        viewImage.put("ImageUrl", img.getImageUrl());
+                    }
+                    if (img.getView() != null) {
+                        viewImage.put("View", img.getView());
+                    }
+                    viewImages.add(viewImage);
+                }
+                requestBody.put("MultiViewImages", viewImages);
+            }
             
+            if (request.getResultFormat() != null) {
+                requestBody.put("ResultFormat", request.getResultFormat());
+            } else {
+                requestBody.put("ResultFormat", "OBJ"); // 默认格式
+            }
+            
+            if (request.getEnablePBR() != null) {
+                requestBody.put("EnablePBR", request.getEnablePBR());
+            }
+
+            // 发送HTTP请求
+            String jsonBody = objectMapper.writeValueAsString(requestBody);
+            HttpHeaders headers = buildHeaders("SubmitHunyuanTo3DJob", jsonBody);
+            
+            HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+            String url = "https://" + tencentCloudConfig.getHunyuan().getEndpoint() + "/";
+            
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                url, HttpMethod.POST, entity, String.class);
+
             // 解析响应
-            return objectMapper.readValue(response.getBody(), HunyuanResponse.class);
+            Map<String, Object> responseMap = objectMapper.readValue(responseEntity.getBody(), Map.class);
+            Map<String, Object> response = (Map<String, Object>) responseMap.get("Response");
+
+            HunyuanResponse result = new HunyuanResponse();
             
+            if (response.containsKey("Error")) {
+                Map<String, String> error = (Map<String, String>) response.get("Error");
+                HunyuanResponse.ErrorInfo errorInfo = HunyuanResponse.ErrorInfo.builder()
+                    .code(error.get("Code"))
+                    .message(error.get("Message"))
+                    .build();
+                
+                HunyuanResponse.ResponseData responseData = HunyuanResponse.ResponseData.builder()
+                    .error(errorInfo)
+                    .build();
+                result.setResponse(responseData);
+            } else {
+                HunyuanResponse.ResponseData responseData = HunyuanResponse.ResponseData.builder()
+                    .jobId((String) response.get("JobId"))
+                    .requestId((String) response.get("RequestId"))
+                    .build();
+                result.setResponse(responseData);
+            }
+
+            logger.info("Successfully submitted Hunyuan 3D job, JobId: {}, RequestId: {}", 
+                       result.getResponse() != null ? result.getResponse().getJobId() : null,
+                       result.getResponse() != null ? result.getResponse().getRequestId() : null);
+
+            return result;
+
         } catch (Exception e) {
-            log.error("提交腾讯混元3D任务失败", e);
-            throw new RuntimeException("提交腾讯混元3D任务失败: " + e.getMessage(), e);
+            logger.error("Error when submitting Hunyuan 3D job", e);
+            
+            HunyuanResponse errorResponse = new HunyuanResponse();
+            HunyuanResponse.ErrorInfo errorInfo = HunyuanResponse.ErrorInfo.builder()
+                .code("InternalError")
+                .message("Internal server error: " + e.getMessage())
+                .build();
+            
+            HunyuanResponse.ResponseData responseData = HunyuanResponse.ResponseData.builder()
+                .error(errorInfo)
+                .build();
+            errorResponse.setResponse(responseData);
+            
+            return errorResponse;
         }
     }
     
     @Override
-    public Object queryJobStatus(String jobId) {
+    public HunyuanResponse queryJobStatus(String jobId) {
         try {
-            // 构建查询请求
-            String url = "https://" + tencentCloudConfig.getHunyuan().getEndpoint();
-            
+            if (jobId == null || jobId.trim().isEmpty()) {
+                throw new IllegalArgumentException("JobId cannot be null or empty");
+            }
+
+            // 构建请求体
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("JobId", jobId);
+
+            // 发送HTTP请求
+            String jsonBody = objectMapper.writeValueAsString(requestBody);
+            HttpHeaders headers = buildHeaders("DescribeHunyuanTo3DJob", jsonBody);
             
-            HttpHeaders headers = buildQueryHeaders(requestBody);
-            HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(requestBody), headers);
+            HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+            String url = "https://" + tencentCloudConfig.getHunyuan().getEndpoint() + "/";
             
-            log.info("查询腾讯混元3D任务状态，任务ID: {}", jobId);
-            
-            // 发送请求
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-            
-            log.info("腾讯混元3D任务状态查询响应: {}", response.getBody());
-            
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                url, HttpMethod.POST, entity, String.class);
+
             // 解析响应
-            return objectMapper.readValue(response.getBody(), Object.class);
+            Map<String, Object> responseMap = objectMapper.readValue(responseEntity.getBody(), Map.class);
+            Map<String, Object> response = (Map<String, Object>) responseMap.get("Response");
+
+            HunyuanResponse result = new HunyuanResponse();
             
+            if (response.containsKey("Error")) {
+                Map<String, String> error = (Map<String, String>) response.get("Error");
+                HunyuanResponse.ErrorInfo errorInfo = HunyuanResponse.ErrorInfo.builder()
+                    .code(error.get("Code"))
+                    .message(error.get("Message"))
+                    .build();
+                
+                HunyuanResponse.ResponseData responseData = HunyuanResponse.ResponseData.builder()
+                    .error(errorInfo)
+                    .build();
+                result.setResponse(responseData);
+            } else {
+                HunyuanResponse.ResponseData responseData = HunyuanResponse.ResponseData.builder()
+                    .jobId((String) response.get("JobId"))
+                    .requestId((String) response.get("RequestId"))
+                    .status((String) response.get("Status"))
+                    .resultUrl((String) response.get("ResultUrl"))
+                    .build();
+                result.setResponse(responseData);
+            }
+
+            logger.info("Successfully queried Hunyuan 3D job status, JobId: {}, Status: {}", 
+                       jobId, result.getResponse() != null ? result.getResponse().getStatus() : null);
+
+            return result;
+
         } catch (Exception e) {
-            log.error("查询腾讯混元3D任务状态失败", e);
-            throw new RuntimeException("查询腾讯混元3D任务状态失败: " + e.getMessage(), e);
+            logger.error("Error when querying Hunyuan 3D job status", e);
+            
+            HunyuanResponse errorResponse = new HunyuanResponse();
+            HunyuanResponse.ErrorInfo errorInfo = HunyuanResponse.ErrorInfo.builder()
+                .code("InternalError")
+                .message("Internal server error: " + e.getMessage())
+                .build();
+            
+            HunyuanResponse.ResponseData responseData = HunyuanResponse.ResponseData.builder()
+                .error(errorInfo)
+                .build();
+            errorResponse.setResponse(responseData);
+            
+            return errorResponse;
         }
     }
     
@@ -96,140 +252,99 @@ public class HunyuanServiceImpl implements IHunyuanService {
             throw new IllegalArgumentException("请求参数不能为空");
         }
         
-        if (!StringUtils.hasText(request.getPrompt())) {
-            throw new IllegalArgumentException("提示词不能为空");
+        // 检查必填参数：Prompt、ImageBase64、ImageUrl 三者必填其一
+        boolean hasPrompt = request.getPrompt() != null && !request.getPrompt().trim().isEmpty();
+        boolean hasImageBase64 = request.getImageBase64() != null && !request.getImageBase64().trim().isEmpty();
+        boolean hasImageUrl = request.getImageUrl() != null && !request.getImageUrl().trim().isEmpty();
+        
+        if (!hasPrompt && !hasImageBase64 && !hasImageUrl) {
+            throw new IllegalArgumentException("提示词(Prompt)、图片Base64(ImageBase64)、图片URL(ImageUrl) 三者必填其一");
         }
         
-        if (request.getPrompt().length() > 1000) {
-            throw new IllegalArgumentException("提示词长度不能超过1000个字符");
+        // Prompt和Image不能同时存在
+        if (hasPrompt && (hasImageBase64 || hasImageUrl)) {
+            throw new IllegalArgumentException("提示词(Prompt)和图片(ImageBase64/ImageUrl)不能同时存在");
+        }
+        
+        // ImageBase64和ImageUrl不能同时存在
+        if (hasImageBase64 && hasImageUrl) {
+            throw new IllegalArgumentException("图片Base64(ImageBase64)和图片URL(ImageUrl)不能同时存在");
+        }
+        
+        // 验证提示词长度
+        if (hasPrompt && request.getPrompt().length() > 1024) {
+            throw new IllegalArgumentException("提示词长度不能超过1024个字符");
+        }
+        
+        // 验证结果格式
+        if (request.getResultFormat() != null && !request.getResultFormat().trim().isEmpty()) {
+            String format = request.getResultFormat().toUpperCase();
+            if (!"OBJ".equals(format) && !"GLB".equals(format) && !"STL".equals(format) 
+                && !"USDZ".equals(format) && !"FBX".equals(format) && !"MP4".equals(format)) {
+                throw new IllegalArgumentException("不支持的结果格式，支持的格式: OBJ, GLB, STL, USDZ, FBX, MP4");
+            }
         }
     }
     
     /**
-     * 构建请求头
+     * 构建请求头，包含腾讯云签名
      */
-    private HttpHeaders buildHeaders(HunyuanRequest request) throws Exception {
+    private HttpHeaders buildHeaders(String action, String payload) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         
-        // 构建腾讯云API签名
+        String service = "ai3d";
+        String version = "2025-05-13";
+        String region = tencentCloudConfig.getRegion();
         String timestamp = String.valueOf(System.currentTimeMillis() / 1000);
         String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         
-        // 构建规范请求字符串
-        String canonicalRequest = buildCanonicalRequest(request);
-        
-        // 构建待签名字符串
-        String stringToSign = buildStringToSign(timestamp, date, canonicalRequest);
-        
-        // 计算签名
-        String signature = calculateSignature(date, stringToSign);
-        
-        // 构建Authorization头
-        String authorization = buildAuthorization(timestamp, date, signature);
-        
-        headers.set("Authorization", authorization);
-        headers.set("X-TC-Action", ACTION);
-        headers.set("X-TC-Timestamp", timestamp);
-        headers.set("X-TC-Version", "2022-07-01");
-        headers.set("X-TC-Region", tencentCloudConfig.getRegion());
-        
-        return headers;
-    }
-    
-    /**
-     * 构建查询请求头
-     */
-    private HttpHeaders buildQueryHeaders(Map<String, Object> requestBody) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        
-        // 构建腾讯云API签名
-        String timestamp = String.valueOf(System.currentTimeMillis() / 1000);
-        String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        
-        // 构建规范请求字符串
-        String canonicalRequest = buildCanonicalRequestForQuery(requestBody);
-        
-        // 构建待签名字符串
-        String stringToSign = buildStringToSign(timestamp, date, canonicalRequest);
-        
-        // 计算签名
-        String signature = calculateSignature(date, stringToSign);
-        
-        // 构建Authorization头
-        String authorization = buildAuthorization(timestamp, date, signature);
-        
-        headers.set("Authorization", authorization);
-        headers.set("X-TC-Action", "DescribeHunyuanTo3DJob");
-        headers.set("X-TC-Timestamp", timestamp);
-        headers.set("X-TC-Version", "2022-07-01");
-        headers.set("X-TC-Region", tencentCloudConfig.getRegion());
-        
-        return headers;
-    }
-    
-    private String buildCanonicalRequest(HunyuanRequest request) throws Exception {
-        String httpMethod = "POST";
+        // 构建规范请求
+        String httpRequestMethod = "POST";
         String canonicalUri = "/";
         String canonicalQueryString = "";
         String canonicalHeaders = "content-type:application/json; charset=utf-8\n" +
-                                "host:" + tencentCloudConfig.getHunyuan().getEndpoint() + "\n";
-        String signedHeaders = "content-type;host";
-        String payload = objectMapper.writeValueAsString(request);
-        String hashedPayload = sha256Hex(payload);
+                                 "host:" + tencentCloudConfig.getHunyuan().getEndpoint() + "\n" +
+                                 "x-tc-action:" + action.toLowerCase() + "\n";
+        String signedHeaders = "content-type;host;x-tc-action";
+        String hashedRequestPayload = sha256Hex(payload);
+        String canonicalRequest = httpRequestMethod + "\n" +
+                                canonicalUri + "\n" +
+                                canonicalQueryString + "\n" +
+                                canonicalHeaders + "\n" +
+                                signedHeaders + "\n" +
+                                hashedRequestPayload;
         
-        return httpMethod + "\n" +
-               canonicalUri + "\n" +
-               canonicalQueryString + "\n" +
-               canonicalHeaders + "\n" +
-               signedHeaders + "\n" +
-               hashedPayload;
-    }
-    
-    private String buildCanonicalRequestForQuery(Map<String, Object> requestBody) throws Exception {
-        String httpMethod = "POST";
-        String canonicalUri = "/";
-        String canonicalQueryString = "";
-        String canonicalHeaders = "content-type:application/json; charset=utf-8\n" +
-                                "host:" + tencentCloudConfig.getHunyuan().getEndpoint() + "\n";
-        String signedHeaders = "content-type;host";
-        String payload = objectMapper.writeValueAsString(requestBody);
-        String hashedPayload = sha256Hex(payload);
-        
-        return httpMethod + "\n" +
-               canonicalUri + "\n" +
-               canonicalQueryString + "\n" +
-               canonicalHeaders + "\n" +
-               signedHeaders + "\n" +
-               hashedPayload;
-    }
-    
-    private String buildStringToSign(String timestamp, String date, String canonicalRequest) throws Exception {
-        String credentialScope = date + "/" + SERVICE + "/tc3_request";
+        // 构建待签名字符串
+        String algorithm = "TC3-HMAC-SHA256";
+        String credentialScope = date + "/" + service + "/tc3_request";
         String hashedCanonicalRequest = sha256Hex(canonicalRequest);
+        String stringToSign = algorithm + "\n" +
+                            timestamp + "\n" +
+                            credentialScope + "\n" +
+                            hashedCanonicalRequest;
         
-        return ALGORITHM + "\n" +
-               timestamp + "\n" +
-               credentialScope + "\n" +
-               hashedCanonicalRequest;
-    }
-    
-    private String calculateSignature(String date, String stringToSign) throws Exception {
-        byte[] secretDate = hmacSha256(("TC3" + tencentCloudConfig.getSecretKey()).getBytes(StandardCharsets.UTF_8), date);
-        byte[] secretService = hmacSha256(secretDate, SERVICE);
+        // 计算签名
+        byte[] secretDate = hmacSha256(("TC3" + credential.getSecretKey()).getBytes(StandardCharsets.UTF_8), date);
+        byte[] secretService = hmacSha256(secretDate, service);
         byte[] secretSigning = hmacSha256(secretService, "tc3_request");
-        return bytesToHex(hmacSha256(secretSigning, stringToSign));
-    }
-    
-    private String buildAuthorization(String timestamp, String date, String signature) {
-        String credentialScope = date + "/" + SERVICE + "/tc3_request";
-        String credential = tencentCloudConfig.getSecretId() + "/" + credentialScope;
+        String signature = bytesToHex(hmacSha256(secretSigning, stringToSign));
         
-        return ALGORITHM + " " +
-               "Credential=" + credential + ", " +
-               "SignedHeaders=content-type;host, " +
-               "Signature=" + signature;
+        // 构建Authorization
+        String authorization = algorithm + " " +
+                             "Credential=" + credential.getSecretId() + "/" + credentialScope + ", " +
+                             "SignedHeaders=" + signedHeaders + ", " +
+                             "Signature=" + signature;
+        
+        headers.set("Authorization", authorization);
+        headers.set("Content-Type", "application/json; charset=utf-8");
+        headers.set("Host", tencentCloudConfig.getHunyuan().getEndpoint());
+        headers.set("X-TC-Action", action);
+        headers.set("X-TC-Timestamp", timestamp);
+        headers.set("X-TC-Version", version);
+        headers.set("X-TC-Region", region);
+        
+        return headers;
     }
     
     private String sha256Hex(String s) throws Exception {

@@ -35,6 +35,20 @@ spring:
 #  mapper-locations: classpath:/mybatis/mapper/*.xml
 #  config-location:  classpath:/mybatis/config/mybatis-config.xml
 
+# 腾讯云API配置 - 开发环境
+tencent:
+  cloud:
+    secret-id: ${TENCENT_SECRET_ID:AKIDeFlBRWP6arwoTxW2bDDB4nLeksqcYyFL}
+    secret-key: ${TENCENT_SECRET_KEY:2sWyNbuAWo8SesKgu7FRVRl6MVXTHxW3}
+    region: ${TENCENT_REGION:ap-beijing}
+    hunyuan:
+      endpoint: ai3d.tencentcloudapi.com
+      version: 2025-05-13
+      timeout: 60000
+      max-retries: 3
+      enable-pbr: false
+      default-format: OBJ
+
 # 日志
 logging:
   level:

@@ -41,11 +41,11 @@ thread:
         block-queue-size: 5000
         policy: CallerRunsPolicy
 
-# 第三方API配置（测试环境）
-meshy:
-  api:
-    url: https://api.meshy.ai
-    key: test_key
+# 注释掉Meshy API配置（测试环境）- 只保留腾讯混元API
+# meshy:
+#   api:
+#     url: https://api.meshy.ai
+#     key: test_key
 
 hunyuan:
   api:
@@ -54,12 +54,14 @@ hunyuan:
     secret-key: test_key
     region: ap-beijing
 
-# API提供商配置
+# API提供商配置 - 只保留腾讯混元
 api:
   provider:
-    default: meshy
-    fallback: hunyuan
-    enable-fallback: true
+    default: hunyuan  # 默认使用腾讯混元
+    # 注释掉备用API配置，因为只有一个提供商
+    # fallback: hunyuan
+    # enable-fallback: true
+    enable-fallback: false
 
 # 日志
 logging:

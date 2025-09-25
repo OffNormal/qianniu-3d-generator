@@ -1,5 +1,10 @@
 package org.example.infrastructure.gateway;
 
+/*
+ * Meshy API网关实现 - 已注释，只保留腾讯混元API
+ */
+
+/*
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +20,7 @@ import java.util.Map;
 /**
  * Meshy API网关实现
  */
+/*
 @Slf4j
 @Component
 public class MeshyApiGateway {
@@ -31,6 +37,7 @@ public class MeshyApiGateway {
     /**
      * 文本转3D
      */
+/*
     public String textTo3D(String text, Map<String, Object> params) {
         try {
             String url = apiUrl + "/v1/text-to-3d";
@@ -66,6 +73,7 @@ public class MeshyApiGateway {
     /**
      * 图片转3D
      */
+/*
     public String imageTo3D(String imageUrl, Map<String, Object> params) {
         try {
             String url = apiUrl + "/v1/image-to-3d";
@@ -100,6 +108,7 @@ public class MeshyApiGateway {
     /**
      * 查询任务状态
      */
+/*
     public TaskResult queryTaskStatus(String taskId) {
         try {
             String url = apiUrl + "/v1/text-to-3d/" + taskId;
@@ -143,6 +152,7 @@ public class MeshyApiGateway {
     /**
      * 任务结果
      */
+/*
     public static class TaskResult {
         private String taskId;
         private String status;
@@ -183,3 +193,4 @@ public class MeshyApiGateway {
         }
     }
 }
+*/
