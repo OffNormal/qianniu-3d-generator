@@ -5,6 +5,8 @@ import com.qiniu.model3d.service.AIModelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -21,7 +23,9 @@ import java.util.function.Consumer;
  * @author Qiniu Team
  * @version 1.0.0
  */
-@Service
+@Service("mockAIModelServiceImpl")
+@Primary
+@ConditionalOnProperty(name = "app.ai.service-type", havingValue = "default", matchIfMissing = true)
 public class MockAIModelServiceImpl implements AIModelService {
 
     private static final Logger logger = LoggerFactory.getLogger(MockAIModelServiceImpl.class);

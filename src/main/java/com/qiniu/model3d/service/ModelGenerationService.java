@@ -52,6 +52,9 @@ public class ModelGenerationService {
     @Value("${app.file.max-file-size}")
     private long maxFileSize;
 
+    @Value("${app.ai.service-type:default}")
+    private String aiServiceType;
+
     // 支持的图片格式
     private static final List<String> SUPPORTED_IMAGE_TYPES = Arrays.asList(
         "image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/webp"
@@ -199,8 +202,9 @@ public class ModelGenerationService {
             task.setUpdatedAt(LocalDateTime.now());
             modelTaskRepository.save(task);
             
-            // 调用AI服务生成模型
-            String modelPath = aiModelService.generateModelFromText(
+            // 选择合适的AI服务并生成模型
+            AIModelService selectedService = getSelectedAIService();
+            String modelPath = selectedService.generateModelFromText(
                 task.getInputText(), 
                 task.getComplexity(), 
                 task.getOutputFormat(),
@@ -245,8 +249,9 @@ public class ModelGenerationService {
             task.setUpdatedAt(LocalDateTime.now());
             modelTaskRepository.save(task);
             
-            // 调用AI服务生成模型
-            String modelPath = aiModelService.generateModelFromImage(
+            // 选择合适的AI服务并生成模型
+            AIModelService selectedService = getSelectedAIService();
+            String modelPath = selectedService.generateModelFromImage(
                 task.getInputImagePath(),
                 task.getInputText(),
                 task.getComplexity(),
@@ -281,7 +286,15 @@ public class ModelGenerationService {
     // 辅助方法
 
     /**
-     * 验证文本请求
+     * 获取AI服务（Spring会根据配置自动注入正确的实现）
+     */
+    private AIModelService getSelectedAIService() {
+        logger.info("使用AI服务: {}", aiModelService.getClass().getSimpleName());
+        return aiModelService;
+    }
+
+    /**
+     * 验证文本生成请求
      */
     private void validateTextRequest(TextGenerationRequest request) {
         if (request.getText() == null || request.getText().trim().isEmpty()) {

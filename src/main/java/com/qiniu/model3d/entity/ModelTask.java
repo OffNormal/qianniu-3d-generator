@@ -261,7 +261,7 @@ public class ModelTask {
     }
 
     public enum OutputFormat {
-        OBJ, STL, PLY
+        OBJ, STL, PLY, GLB, USDZ, FBX, MP4
     }
 
     public enum TaskStatus {

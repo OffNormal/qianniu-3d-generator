@@ -16,7 +16,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/qiniu_3d_generator?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
-    password: password
+    password: root123456
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -31,7 +31,7 @@ spring:
     show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
 
   # 文件上传配置
@@ -81,12 +81,30 @@ app:
   
   # AI服务配置
   ai:
+    service-type: ${AI_SERVICE_TYPE:tencent}  # 可选值: default, tencent
     text-to-3d:
       endpoint: http://localhost:5000/api/text-to-3d
       timeout: 300
     image-to-3d:
       endpoint: http://localhost:5000/api/image-to-3d
       timeout: 600
+
+# 腾讯云配置
+tencent:
+  cloud:
+    secret-id: ${TENCENT_SECRET_ID:AKIDeFlBRWP6arwoTxW2bDDB4nLeksqcYyFL}
+    secret-key: ${TENCENT_SECRET_KEY:2sWyNbuAWo8SesKgu7FRVRl6MVXTHxW3}
+    region: ${TENCENT_REGION:ap-guangzhou}
+    # 腾讯混元AI3D服务配置
+    ai3d:
+      endpoint: hunyuan.tencentcloudapi.com
+      version: 2023-09-01
+      timeout: 30000  # 30秒
+      retry-count: 60  # 最大重试次数（5分钟轮询）
+      generation:
+        complexity: medium
+        format: jpg
+        style: "201"  # 概念艺术风格
 
 ---
 # 开发环境配置

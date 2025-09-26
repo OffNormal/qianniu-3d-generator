@@ -101,39 +101,50 @@ async function handleTextGeneration(event) {
     event.preventDefault();
     
     const formData = new FormData(event.target);
-    const requestData = {
-        text: formData.get('text'),
-        complexity: formData.get('complexity'),
-        format: formData.get('format')
-    };
+    const prompt = formData.get('text');
+    const complexity = formData.get('complexity');
+    const format = formData.get('format');
     
     // 验证输入
-    if (!requestData.text.trim()) {
+    if (!prompt.trim()) {
         showError('请输入模型描述');
         return;
     }
     
-    if (requestData.text.length > 1000) {
-        showError('文本描述不能超过1000个字符');
+    if (prompt.length > 1024) {
+        showError('文本描述不能超过1024个字符');
         return;
     }
     
     try {
         showLoading(true);
         
-        const response = await fetch('/api/v1/models/generate/text', {
+        // 构建URL参数
+        const params = new URLSearchParams();
+        params.append('prompt', prompt);
+        if (format && format !== 'OBJ') {
+            params.append('resultFormat', format);
+        }
+        // 可以根据需要添加enablePBR参数
+        // params.append('enablePBR', false);
+        
+        const response = await fetch('/api/v1/ai3d/generate/text', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: JSON.stringify(requestData)
+            body: params
         });
         
         const result = await response.json();
         
         if (result.code === 200) {
-            currentTaskId = result.data.taskId;
-            showStatusPanel(result.data);
+            currentTaskId = result.data.jobId;  // 注意：腾讯云AI3D返回的是jobId，不是taskId
+            showStatusPanel({
+                taskId: result.data.jobId,
+                status: 'PROCESSING',
+                requestId: result.data.requestId
+            });
             startStatusPolling();
         } else {
             showError(result.message || '生成请求失败');
@@ -351,27 +362,56 @@ function hideStatusPanel() {
 }
 
 function updateStatusPanel(statusData) {
-    elements.currentStatus.textContent = statusData.status;
-    elements.currentStatus.className = `status-badge ${statusData.status.toLowerCase()}`;
+    // 腾讯AI3D状态映射：WAIT -> PENDING, RUN -> PROCESSING, DONE -> COMPLETED, FAIL -> FAILED
+    const statusMapping = {
+        'WAIT': 'PENDING',
+        'RUN': 'PROCESSING', 
+        'DONE': 'COMPLETED',
+        'FAIL': 'FAILED'
+    };
     
-    elements.progressFill.style.width = `${statusData.progress}%`;
-    elements.progressPercent.textContent = `${statusData.progress}%`;
+    const mappedStatus = statusMapping[statusData.status] || statusData.status;
+    
+    elements.currentStatus.textContent = mappedStatus;
+    elements.currentStatus.className = `status-badge ${mappedStatus.toLowerCase()}`;
+    
+    // 根据状态计算进度
+    let progress = 0;
+    switch (statusData.status) {
+        case 'WAIT':
+            progress = 10;
+            break;
+        case 'RUN':
+            progress = 50; // 运行中显示50%
+            break;
+        case 'DONE':
+            progress = 100;
+            break;
+        case 'FAIL':
+            progress = 0;
+            break;
+        default:
+            progress = statusData.progress || 0;
+    }
+    
+    elements.progressFill.style.width = `${progress}%`;
+    elements.progressPercent.textContent = `${progress}%`;
     
     // 更新状态消息
     const statusMessages = {
-        'PENDING': '任务已创建，等待处理...',
-        'PROCESSING': '正在生成3D模型...',
-        'COMPLETED': '模型生成完成！',
-        'FAILED': '生成失败，请重试'
+        'WAIT': '任务已创建，等待处理...',
+        'RUN': '正在生成3D模型...',
+        'DONE': '模型生成完成！',
+        'FAIL': '生成失败，请重试'
     };
     
     elements.statusMessage.textContent = statusMessages[statusData.status] || statusData.errorMessage || '处理中...';
     
     // 如果完成，显示结果面板
-    if (statusData.status === 'COMPLETED') {
+    if (statusData.status === 'DONE') {
         showResultPanel(statusData);
         stopStatusPolling();
-    } else if (statusData.status === 'FAILED') {
+    } else if (statusData.status === 'FAIL') {
         stopStatusPolling();
     }
 }
@@ -416,7 +456,7 @@ function stopStatusPolling() {
 
 async function checkTaskStatus() {
     try {
-        const response = await fetch(`/api/v1/models/status/${currentTaskId}`);
+        const response = await fetch(`/api/v1/ai3d/query/${currentTaskId}`);
         const result = await response.json();
         
         if (result.code === 200) {
@@ -436,7 +476,7 @@ async function showModelPreview() {
     try {
         showLoading(true);
         
-        const previewUrl = `/api/v1/models/preview/${currentTaskId}?angle=front&size=medium`;
+        const previewUrl = `/api/v1/ai3d/preview/${currentTaskId}?angle=front&size=medium`;
         elements.modelPreviewImg.src = previewUrl;
         elements.previewModal.style.display = 'flex';
         
@@ -459,7 +499,7 @@ function hidePreviewModal() {
 function changePreviewAngle(angle) {
     if (!currentTaskId) return;
     
-    const previewUrl = `/api/v1/models/preview/${currentTaskId}?angle=${angle}&size=medium`;
+    const previewUrl = `/api/v1/ai3d/preview/${currentTaskId}?angle=${angle}&size=medium`;
     elements.modelPreviewImg.src = previewUrl;
 }
 
@@ -467,7 +507,7 @@ function changePreviewAngle(angle) {
 function downloadModel() {
     if (!currentTaskId) return;
     
-    const downloadUrl = `/api/v1/models/download/${currentTaskId}`;
+    const downloadUrl = `/api/v1/ai3d/download/${currentTaskId}`;
     
     // 创建隐藏的下载链接
     const link = document.createElement('a');

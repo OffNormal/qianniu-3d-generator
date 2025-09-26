@@ -14,7 +14,7 @@ import javax.validation.constraints.Size;
 public class TextGenerationRequest {
 
     @NotBlank(message = "文本描述不能为空")
-    @Size(min = 10, max = 500, message = "文本长度必须在10-500字符之间")
+    @Size(min = 1, max = 1000, message = "文本长度必须在1-1000字符之间")
     private String text;
 
     private ModelTask.Complexity complexity = ModelTask.Complexity.SIMPLE;

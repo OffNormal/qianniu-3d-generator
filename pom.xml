@@ -135,7 +135,23 @@
             <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
+        
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java-aiart</artifactId>
+            <version>3.1.1304</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java-ai3d</artifactId>
+            <version>3.1.1344</version>
+        </dependency>
+
     </dependencies>
+    
+
+
 
     <build>
         <plugins>
