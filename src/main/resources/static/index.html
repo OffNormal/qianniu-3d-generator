@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>七牛云 3D 模型生成器</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- 头部导航 -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-cube"></i>
+                <span>七牛云 3D 生成器</span>
+            </div>
+            <nav class="nav">
+                <a href="#home" class="nav-link active">首页</a>
+                <a href="#history" class="nav-link">历史记录</a>
+                <a href="#help" class="nav-link">帮助</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="main">
+        <div class="container">
+            <!-- 欢迎区域 -->
+            <section class="hero">
+                <h1>AI 驱动的 3D 模型生成</h1>
+                <p>通过文本描述或图片上传，快速生成高质量的 3D 模型</p>
+            </section>
+
+            <!-- 生成选项卡 -->
+            <section class="generation-tabs">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="text">
+                        <i class="fas fa-keyboard"></i>
+                        文本生成
+                    </button>
+                    <button class="tab-btn" data-tab="image">
+                        <i class="fas fa-image"></i>
+                        图片生成
+                    </button>
+                </div>
+
+                <!-- 文本生成面板 -->
+                <div class="tab-content active" id="text-tab">
+                    <div class="input-panel">
+                        <h3>描述您想要的 3D 模型</h3>
+                        <form id="text-form" class="generation-form">
+                            <div class="form-group">
+                                <label for="text-input">模型描述</label>
+                                <textarea 
+                                    id="text-input" 
+                                    name="text" 
+                                    placeholder="例如：一个现代风格的椅子，有着流线型的设计和金属腿..."
+                                    maxlength="1000"
+                                    required></textarea>
+                                <div class="char-counter">
+                                    <span id="text-counter">0</span>/1000
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="text-complexity">复杂度</label>
+                                    <select id="text-complexity" name="complexity">
+                                        <option value="SIMPLE">简单 (快速生成)</option>
+                                        <option value="MEDIUM" selected>中等 (平衡质量)</option>
+                                        <option value="COMPLEX">复杂 (高质量)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="text-format">输出格式</label>
+                                    <select id="text-format" name="format">
+                                        <option value="OBJ" selected>OBJ (通用)</option>
+                                        <option value="PLY">PLY (点云)</option>
+                                        <option value="STL">STL (3D打印)</option>
+                                        <option value="GLTF">GLTF (Web)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="generate-btn">
+                                <i class="fas fa-magic"></i>
+                                开始生成
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 图片生成面板 -->
+                <div class="tab-content" id="image-tab">
+                    <div class="input-panel">
+                        <h3>上传图片生成 3D 模型</h3>
+                        <form id="image-form" class="generation-form">
+                            <div class="form-group">
+                                <label for="image-input">选择图片</label>
+                                <div class="file-upload-area" id="file-upload-area">
+                                    <input type="file" id="image-input" name="image" accept="image/*" required>
+                                    <div class="upload-placeholder">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <p>点击选择图片或拖拽到此处</p>
+                                        <small>支持 JPG、PNG、GIF、BMP、WebP 格式，最大 10MB</small>
+                                    </div>
+                                    <div class="image-preview" id="image-preview" style="display: none;">
+                                        <img id="preview-img" src="" alt="预览图片">
+                                        <button type="button" class="remove-image" id="remove-image">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="image-description">补充描述 (可选)</label>
+                                <textarea 
+                                    id="image-description" 
+                                    name="description" 
+                                    placeholder="为图片添加更多描述信息，帮助生成更准确的模型..."
+                                    maxlength="500"></textarea>
+                                <div class="char-counter">
+                                    <span id="desc-counter">0</span>/500
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="image-complexity">复杂度</label>
+                                    <select id="image-complexity" name="complexity">
+                                        <option value="SIMPLE">简单 (快速生成)</option>
+                                        <option value="MEDIUM" selected>中等 (平衡质量)</option>
+                                        <option value="COMPLEX">复杂 (高质量)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="image-format">输出格式</label>
+                                    <select id="image-format" name="format">
+                                        <option value="OBJ" selected>OBJ (通用)</option>
+                                        <option value="PLY">PLY (点云)</option>
+                                        <option value="STL">STL (3D打印)</option>
+                                        <option value="GLTF">GLTF (Web)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="generate-btn">
+                                <i class="fas fa-magic"></i>
+                                开始生成
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 生成状态面板 -->
+            <section class="status-panel" id="status-panel" style="display: none;">
+                <div class="status-card">
+                    <div class="status-header">
+                        <h3>生成进度</h3>
+                        <button class="close-status" id="close-status">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="task-info">
+                        <div class="task-id">
+                            任务ID: <span id="current-task-id">-</span>
+                        </div>
+                        <div class="task-status">
+                            状态: <span id="current-status" class="status-badge">-</span>
+                        </div>
+                    </div>
+
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="progress-percent">0%</span>
+                            <span id="estimated-time">预计时间: -</span>
+                        </div>
+                    </div>
+
+                    <div class="status-message" id="status-message">
+                        正在初始化...
+                    </div>
+
+                    <!-- 完成后的结果 -->
+                    <div class="result-panel" id="result-panel" style="display: none;">
+                        <h4>生成完成！</h4>
+                        <div class="result-actions">
+                            <button class="btn btn-primary" id="preview-btn">
+                                <i class="fas fa-eye"></i>
+                                预览模型
+                            </button>
+                            <button class="btn btn-success" id="download-btn">
+                                <i class="fas fa-download"></i>
+                                下载模型
+                            </button>
+                        </div>
+                        
+                        <div class="model-info" id="model-info">
+                            <!-- 模型信息将在这里显示 -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3D 预览模态框 -->
+            <div class="modal" id="preview-modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>3D 模型预览</h3>
+                        <button class="close-modal" id="close-preview">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="preview-container" id="preview-container">
+                            <img id="model-preview-img" src="" alt="模型预览">
+                        </div>
+                        <div class="preview-controls">
+                            <button class="preview-control-btn" data-angle="front">正面</button>
+                            <button class="preview-control-btn" data-angle="side">侧面</button>
+                            <button class="preview-control-btn" data-angle="top">顶部</button>
+                            <button class="preview-control-btn" data-angle="perspective">透视</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 七牛云 3D 模型生成器. 基于先进的 AI 技术驱动.</p>
+        </div>
+    </footer>
+
+    <!-- 加载提示 -->
+    <div class="loading-overlay" id="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>处理中...</p>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/app.js"></script>
+</body>
+</html>

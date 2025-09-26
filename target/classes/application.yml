@@ -1,0 +1,121 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: qiniu-3d-generator
+  
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/qiniu_3d_generator?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: password
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+      file-size-threshold: 2KB
+
+  # 开发环境配置
+  profiles:
+    active: dev
+
+# 日志配置
+logging:
+  level:
+    com.qiniu.model3d: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
+
+# 应用自定义配置
+app:
+  # 文件存储配置
+  file:
+    upload-dir: ./uploads
+    model-dir: ./models
+    preview-dir: ./previews
+    temp-dir: ./temp
+    max-file-size: 10485760  # 10MB
+    allowed-image-types: jpg,jpeg,png,bmp
+    allowed-model-formats: obj,stl,ply
+  
+  # 模型生成配置
+  model:
+    max-text-length: 500
+    daily-generation-limit: 20
+    generation-timeout: 600  # 10分钟
+    cleanup-interval: 86400  # 24小时
+    file-retention-days: 7
+  
+  # AI服务配置
+  ai:
+    text-to-3d:
+      endpoint: http://localhost:5000/api/text-to-3d
+      timeout: 300
+    image-to-3d:
+      endpoint: http://localhost:5000/api/image-to-3d
+      timeout: 600
+
+---
+# 开发环境配置
+spring:
+  profiles: dev
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+---
+# 生产环境配置
+spring:
+  profiles: prod
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  
+logging:
+  level:
+    com.qiniu.model3d: INFO
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN
