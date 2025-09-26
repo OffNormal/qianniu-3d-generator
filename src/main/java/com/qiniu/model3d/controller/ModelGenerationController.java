@@ -19,6 +19,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
 
 /**
  * 3D模型生成控制器
@@ -134,6 +137,58 @@ public class ModelGenerationController {
     }
 
     /**
+     * 获取生成历史记录
+     */
+    @GetMapping("/history")
+    public ApiResponse<Map<String, Object>> getGenerationHistory(
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "status", required = false) String status,
+            HttpServletRequest httpRequest) {
+        
+        try {
+            logger.debug("获取生成历史记录: page={}, size={}, status={}", page, size, status);
+            
+            // 验证分页参数
+            if (page < 1) page = 1;
+            if (size < 1 || size > 50) size = 10;
+            
+            String clientIp = getClientIp(httpRequest);
+            
+            // 解析状态参数
+            ModelTask.TaskStatus taskStatus = null;
+            if (status != null && !status.trim().isEmpty()) {
+                try {
+                    taskStatus = ModelTask.TaskStatus.valueOf(status.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    return ApiResponse.badRequest("无效的状态参数: " + status);
+                }
+            }
+            
+            // 获取历史记录
+            Page<ModelTask> taskPage = modelGenerationService.getGenerationHistory(clientIp, page, size, taskStatus);
+            
+            // 转换为响应格式
+            List<Map<String, Object>> items = taskPage.getContent().stream()
+                .map(this::convertTaskToHistoryItem)
+                .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("total", taskPage.getTotalElements());
+            response.put("page", page);
+            response.put("size", size);
+            response.put("totalPages", taskPage.getTotalPages());
+            response.put("items", items);
+            
+            return ApiResponse.success("查询成功", response);
+            
+        } catch (Exception e) {
+            logger.error("获取生成历史记录失败", e);
+            return ApiResponse.error("查询失败，请稍后重试");
+        }
+    }
+
+    /**
      * 下载模型文件
      */
     @GetMapping("/download/{modelId}")
@@ -207,6 +262,29 @@ public class ModelGenerationController {
         }
         
         return request.getRemoteAddr();
+    }
+
+    /**
+     * 转换任务数据为历史记录项
+     */
+    private Map<String, Object> convertTaskToHistoryItem(ModelTask task) {
+        Map<String, Object> item = new HashMap<>();
+        item.put("taskId", task.getTaskId());
+        item.put("prompt", task.getInputText()); // 文本输入
+        item.put("status", task.getStatus().toString());
+        item.put("createdAt", task.getCreatedAt());
+        item.put("completedAt", task.getCompletedAt());
+        item.put("modelUrl", task.getModelFilePath()); // 模型文件路径
+        item.put("previewUrl", task.getPreviewImagePath()); // 预览图片路径
+        item.put("errorMessage", task.getErrorMessage());
+        
+        // 计算耗时（如果任务已完成）
+        if (task.getCompletedAt() != null && task.getCreatedAt() != null) {
+            long duration = java.time.Duration.between(task.getCreatedAt(), task.getCompletedAt()).getSeconds();
+            item.put("duration", duration);
+        }
+        
+        return item;
     }
 
     /**

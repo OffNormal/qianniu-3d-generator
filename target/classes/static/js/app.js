@@ -4,7 +4,8 @@ let statusCheckInterval = null;
 
 // DOM 元素
 const elements = {
-    // 选项卡
+    // 导航和标签页
+    navLinks: document.querySelectorAll('.nav-link'),
     tabButtons: document.querySelectorAll('.tab-btn'),
     tabContents: document.querySelectorAll('.tab-content'),
     
@@ -47,7 +48,16 @@ const elements = {
     modelPreviewImg: document.getElementById('model-preview-img'),
     
     // 加载覆盖层
-    loadingOverlay: document.getElementById('loading-overlay')
+    loadingOverlay: document.getElementById('loading-overlay'),
+    
+    // 历史记录页面
+    historySection: document.getElementById('history-section'),
+    historyFilters: document.querySelectorAll('.history-filter'),
+    refreshHistoryBtn: document.getElementById('refresh-history'),
+    historyLoading: document.getElementById('history-loading'),
+    historyEmpty: document.getElementById('history-empty'),
+    historyList: document.getElementById('history-list'),
+    historyPagination: document.getElementById('history-pagination')
 };
 
 // 初始化应用
@@ -56,13 +66,63 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
+    setupNavigation();
     setupTabSwitching();
     setupFormHandlers();
     setupFileUpload();
     setupCharacterCounters();
     setupEventListeners();
+    setupHistoryPage();
     
     console.log('3D模型生成器已初始化');
+}
+
+// 顶部导航处理
+function setupNavigation() {
+    elements.navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const href = link.getAttribute('href');
+            const page = href.substring(1); // 移除 # 符号
+            
+            // 更新导航链接状态
+            elements.navLinks.forEach(navLink => {
+                navLink.classList.remove('active');
+            });
+            link.classList.add('active');
+            
+            // 处理页面切换
+            handlePageSwitch(page);
+        });
+    });
+}
+
+function handlePageSwitch(page) {
+    // 隐藏所有主要内容区域
+    const heroSection = document.querySelector('.hero');
+    const tabsSection = document.querySelector('.generation-tabs');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    if (page === 'home') {
+        // 显示首页内容
+        heroSection.style.display = 'block';
+        tabsSection.style.display = 'block';
+        tabContents.forEach(content => content.style.display = 'block');
+        elements.historySection.style.display = 'none';
+    } else if (page === 'history') {
+        // 显示历史记录页面
+        heroSection.style.display = 'none';
+        tabsSection.style.display = 'none';
+        tabContents.forEach(content => content.style.display = 'none');
+        elements.historySection.style.display = 'block';
+        loadHistoryData();
+    } else if (page === 'help') {
+        // 显示帮助页面（暂时显示首页）
+        heroSection.style.display = 'block';
+        tabsSection.style.display = 'block';
+        tabContents.forEach(content => content.style.display = 'block');
+        elements.historySection.style.display = 'none';
+    }
 }
 
 // 选项卡切换
@@ -85,6 +145,14 @@ function switchTab(tabId) {
     elements.tabContents.forEach(content => {
         content.classList.toggle('active', content.id === `${tabId}-tab`);
     });
+    
+    // 如果切换到历史记录页面，显示历史记录区域并加载数据
+    if (tabId === 'history') {
+        elements.historySection.style.display = 'block';
+        loadHistoryData();
+    } else {
+        elements.historySection.style.display = 'none';
+    }
 }
 
 // 表单处理
@@ -585,4 +653,226 @@ function debugLog(message, data) {
     if (console && console.log) {
         console.log(`[3D Generator] ${message}`, data || '');
     }
+}
+
+// ==================== 历史记录页面功能 ====================
+
+// 历史记录相关变量
+let currentHistoryPage = 1;
+let currentHistoryStatus = 'all';
+const historyPageSize = 10;
+
+// 设置历史记录页面
+function setupHistoryPage() {
+    // 状态筛选器事件
+    elements.historyFilters.forEach(filter => {
+        filter.addEventListener('click', () => {
+            // 更新筛选器状态
+            elements.historyFilters.forEach(f => f.classList.remove('active'));
+            filter.classList.add('active');
+            
+            // 更新当前状态并重新加载数据
+            currentHistoryStatus = filter.dataset.status;
+            currentHistoryPage = 1;
+            loadHistoryData();
+        });
+    });
+    
+    // 刷新按钮事件
+    elements.refreshHistoryBtn.addEventListener('click', () => {
+        currentHistoryPage = 1;
+        loadHistoryData();
+    });
+}
+
+// 加载历史记录数据
+async function loadHistoryData() {
+    try {
+        showHistoryLoading(true);
+        
+        // 构建请求参数
+        const params = new URLSearchParams({
+            page: currentHistoryPage - 1, // 后端使用0开始的页码
+            size: historyPageSize
+        });
+        
+        if (currentHistoryStatus !== 'all') {
+            params.append('status', currentHistoryStatus.toUpperCase());
+        }
+        
+        // 发送请求
+        const response = await fetch(`/api/models/history?${params}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // 显示历史记录
+        displayHistoryData(data);
+        
+    } catch (error) {
+        console.error('加载历史记录失败:', error);
+        showError('加载历史记录失败: ' + error.message);
+        showHistoryEmpty(true);
+    } finally {
+        showHistoryLoading(false);
+    }
+}
+
+// 显示历史记录数据
+function displayHistoryData(data) {
+    const { content: items, totalPages, number: currentPage, totalElements } = data;
+    
+    if (!items || items.length === 0) {
+        showHistoryEmpty(true);
+        elements.historyPagination.style.display = 'none';
+        return;
+    }
+    
+    showHistoryEmpty(false);
+    
+    // 清空现有列表
+    elements.historyList.innerHTML = '';
+    
+    // 渲染历史记录项
+    items.forEach(item => {
+        const historyItem = createHistoryItem(item);
+        elements.historyList.appendChild(historyItem);
+    });
+    
+    // 更新分页
+    updateHistoryPagination(totalPages, currentPage + 1, totalElements);
+}
+
+// 创建历史记录项元素
+function createHistoryItem(item) {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    
+    // 格式化时间
+    const createdAt = new Date(item.createdAt).toLocaleString('zh-CN');
+    const completedAt = item.completedAt ? new Date(item.completedAt).toLocaleString('zh-CN') : '-';
+    
+    // 状态显示文本
+    const statusText = {
+        'PENDING': '等待中',
+        'PROCESSING': '处理中',
+        'COMPLETED': '已完成',
+        'FAILED': '失败'
+    }[item.status] || item.status;
+    
+    div.innerHTML = `
+        <div class="history-item-header">
+            <div class="history-item-id">任务ID: ${item.taskId}</div>
+            <div class="history-item-status">
+                <span class="status-badge ${item.status.toLowerCase()}">${statusText}</span>
+            </div>
+        </div>
+        <div class="history-item-content">
+            <div class="history-item-prompt">
+                <strong>提示词:</strong> ${item.prompt || '无'}
+            </div>
+            <div class="history-item-details">
+                <div class="history-detail">
+                    <span class="detail-label">创建时间:</span>
+                    <span class="detail-value">${createdAt}</span>
+                </div>
+                <div class="history-detail">
+                    <span class="detail-label">完成时间:</span>
+                    <span class="detail-value">${completedAt}</span>
+                </div>
+                ${item.duration ? `
+                <div class="history-detail">
+                    <span class="detail-label">耗时:</span>
+                    <span class="detail-value">${formatTime(item.duration)}</span>
+                </div>
+                ` : ''}
+                ${item.errorMessage ? `
+                <div class="history-detail error">
+                    <span class="detail-label">错误信息:</span>
+                    <span class="detail-value">${item.errorMessage}</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        ${item.status === 'COMPLETED' && (item.modelUrl || item.previewUrl) ? `
+        <div class="history-item-actions">
+            ${item.previewUrl ? `
+            <button class="btn btn-secondary" onclick="previewHistoryModel('${item.previewUrl}')">
+                预览模型
+            </button>
+            ` : ''}
+            ${item.modelUrl ? `
+            <button class="btn btn-primary" onclick="downloadHistoryModel('${item.modelUrl}', '${item.taskId}')">
+                下载模型
+            </button>
+            ` : ''}
+        </div>
+        ` : ''}
+    `;
+    
+    return div;
+}
+
+// 更新历史记录分页
+function updateHistoryPagination(totalPages, currentPage, totalElements) {
+    if (totalPages <= 1) {
+        elements.historyPagination.style.display = 'none';
+        return;
+    }
+    
+    elements.historyPagination.style.display = 'flex';
+    elements.historyPagination.innerHTML = `
+        <div class="pagination-info">
+            共 ${totalElements} 条记录，第 ${currentPage} / ${totalPages} 页
+        </div>
+        <div class="pagination-controls">
+            <button class="btn btn-secondary" ${currentPage <= 1 ? 'disabled' : ''} 
+                    onclick="goToHistoryPage(${currentPage - 1})">
+                上一页
+            </button>
+            <button class="btn btn-secondary" ${currentPage >= totalPages ? 'disabled' : ''} 
+                    onclick="goToHistoryPage(${currentPage + 1})">
+                下一页
+            </button>
+        </div>
+    `;
+}
+
+// 跳转到指定页面
+function goToHistoryPage(page) {
+    if (page < 1) return;
+    currentHistoryPage = page;
+    loadHistoryData();
+}
+
+// 显示/隐藏历史记录加载状态
+function showHistoryLoading(show) {
+    elements.historyLoading.style.display = show ? 'block' : 'none';
+    elements.historyList.style.display = show ? 'none' : 'block';
+}
+
+// 显示/隐藏历史记录空状态
+function showHistoryEmpty(show) {
+    elements.historyEmpty.style.display = show ? 'block' : 'none';
+    elements.historyList.style.display = show ? 'none' : 'block';
+}
+
+// 预览历史记录中的模型
+function previewHistoryModel(previewUrl) {
+    elements.modelPreviewImg.src = previewUrl;
+    elements.previewModal.style.display = 'flex';
+}
+
+// 下载历史记录中的模型
+function downloadHistoryModel(modelUrl, taskId) {
+    const link = document.createElement('a');
+    link.href = modelUrl;
+    link.download = `3d-model-${taskId}.zip`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }

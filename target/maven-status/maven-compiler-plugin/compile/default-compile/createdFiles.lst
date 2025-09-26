@@ -21,7 +21,6 @@ com\qiniu\model3d\entity\ModelTask$Complexity.class
 com\qiniu\model3d\config\TencentCloudConfig.class
 com\qiniu\model3d\controller\TestController.class
 com\qiniu\model3d\service\impl\TencentAi3dClientImpl.class
-com\qiniu\model3d\controller\ModelGenerationController.class
 com\qiniu\model3d\dto\QueryHunyuanTo3DJobRequest.class
 com\qiniu\model3d\service\impl\TencentHunyuanServiceImpl.class
 com\qiniu\model3d\dto\ApiResponse.class

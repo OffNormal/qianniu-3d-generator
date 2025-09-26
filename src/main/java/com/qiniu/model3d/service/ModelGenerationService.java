@@ -131,6 +131,19 @@ public class ModelGenerationService {
     }
 
     /**
+     * 获取用户的生成历史记录
+     */
+    public org.springframework.data.domain.Page<ModelTask> getGenerationHistory(String clientIp, int page, int size, ModelTask.TaskStatus status) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page - 1, size);
+        
+        if (status != null) {
+            return modelTaskRepository.findByClientIpAndStatusOrderByCreatedAtDesc(clientIp, status, pageable);
+        } else {
+            return modelTaskRepository.findByClientIpOrderByCreatedAtDesc(clientIp, pageable);
+        }
+    }
+
+    /**
      * 下载模型文件
      */
     public Resource downloadModel(String modelId, String format) {

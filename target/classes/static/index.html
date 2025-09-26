@@ -32,8 +32,63 @@
                 <p>通过文本描述或图片上传，快速生成高质量的 3D 模型</p>
             </section>
 
+            <!-- 历史记录页面 -->
+            <section class="history-section" id="history-section" style="display: none;">
+                <div class="history-header">
+                    <h2>生成历史记录</h2>
+                    <div class="history-filters">
+                        <select id="status-filter" class="filter-select">
+                            <option value="">全部状态</option>
+                            <option value="COMPLETED">已完成</option>
+                            <option value="PROCESSING">处理中</option>
+                            <option value="FAILED">失败</option>
+                            <option value="PENDING">等待中</option>
+                        </select>
+                        <button id="refresh-history" class="btn btn-secondary">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新
+                        </button>
+                    </div>
+                </div>
+
+                <div class="history-content">
+                    <div class="history-loading" id="history-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>加载中...</p>
+                    </div>
+
+                    <div class="history-empty" id="history-empty" style="display: none;">
+                        <i class="fas fa-history"></i>
+                        <h3>暂无历史记录</h3>
+                        <p>您还没有生成过任何3D模型，快去创建您的第一个作品吧！</p>
+                        <button class="btn btn-primary" onclick="showHomePage()">
+                            <i class="fas fa-plus"></i>
+                            开始生成
+                        </button>
+                    </div>
+
+                    <div class="history-list" id="history-list">
+                        <!-- 历史记录项将在这里动态生成 -->
+                    </div>
+
+                    <div class="history-pagination" id="history-pagination" style="display: none;">
+                        <button id="prev-page" class="btn btn-secondary" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                            上一页
+                        </button>
+                        <span class="page-info">
+                            第 <span id="current-page">1</span> 页，共 <span id="total-pages">1</span> 页
+                        </span>
+                        <button id="next-page" class="btn btn-secondary" disabled>
+                            下一页
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <!-- 生成选项卡 -->
-            <section class="generation-tabs">
+            <section class="generation-tabs" id="generation-tabs">
                 <div class="tab-buttons">
                     <button class="tab-btn active" data-tab="text">
                         <i class="fas fa-keyboard"></i>
