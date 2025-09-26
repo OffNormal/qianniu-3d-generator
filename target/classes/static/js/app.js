@@ -701,7 +701,7 @@ async function loadHistoryData() {
         }
         
         // 发送请求
-        const response = await fetch(`/api/models/history?${params}`);
+        const response = await fetch(`/api/v1/models/history?${params}`);
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
