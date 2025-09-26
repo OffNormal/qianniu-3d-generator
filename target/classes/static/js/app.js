@@ -177,15 +177,32 @@ async function handleImageGeneration(event) {
     try {
         showLoading(true);
         
-        const response = await fetch('/api/v1/models/generate/image', {
+        // 将图片转换为Base64
+        const imageBase64 = await fileToBase64(imageFile);
+        
+        // 构建请求参数
+        const requestFormData = new FormData();
+        requestFormData.append('imageBase64', imageBase64);
+        
+        // 添加可选参数
+        const resultFormat = formData.get('resultFormat');
+        const enablePBR = formData.get('enablePBR');
+        if (resultFormat) {
+            requestFormData.append('resultFormat', resultFormat);
+        }
+        if (enablePBR) {
+            requestFormData.append('enablePBR', enablePBR);
+        }
+        
+        const response = await fetch('/api/v1/ai3d/submit/image-base64', {
             method: 'POST',
-            body: formData
+            body: requestFormData
         });
         
         const result = await response.json();
         
         if (result.code === 200) {
-            currentTaskId = result.data.taskId;
+            currentTaskId = result.data.jobId;
             showStatusPanel(result.data);
             startStatusPolling();
         } else {
@@ -197,6 +214,20 @@ async function handleImageGeneration(event) {
     } finally {
         showLoading(false);
     }
+}
+
+// 将文件转换为Base64的辅助函数
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            // 移除data:image/...;base64,前缀，只保留Base64数据
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
 
 // 文件上传处理
@@ -339,9 +370,9 @@ function setupEventListeners() {
 
 // 状态面板管理
 function showStatusPanel(taskData) {
-    elements.currentTaskId.textContent = taskData.taskId;
-    elements.currentStatus.textContent = taskData.status;
-    elements.currentStatus.className = `status-badge ${taskData.status.toLowerCase()}`;
+    elements.currentTaskId.textContent = taskData.jobId || taskData.taskId;
+    elements.currentStatus.textContent = taskData.status || 'SUBMITTED';
+    elements.currentStatus.className = `status-badge ${(taskData.status || 'submitted').toLowerCase()}`;
     
     if (taskData.estimatedTime) {
         elements.estimatedTime.textContent = `预计时间: ${taskData.estimatedTime}秒`;
@@ -419,18 +450,21 @@ function updateStatusPanel(statusData) {
 function showResultPanel(statusData) {
     elements.resultPanel.style.display = 'block';
     
-    // 更新模型信息
-    if (statusData.modelResult) {
-        const modelInfo = statusData.modelResult.modelInfo;
-        if (modelInfo) {
-            elements.modelInfo.innerHTML = `
-                <div><strong>模型信息:</strong></div>
-                <div>顶点数: ${modelInfo.vertices || 'N/A'}</div>
-                <div>面数: ${modelInfo.faces || 'N/A'}</div>
-                <div>文件大小: ${modelInfo.fileSize || 'N/A'}</div>
-                <div>格式: ${modelInfo.format || 'N/A'}</div>
-            `;
-        }
+    // 更新模型信息 - 适配腾讯云AI3D数据结构
+    if (statusData.resultFile3Ds && statusData.resultFile3Ds.length > 0) {
+        const file3D = statusData.resultFile3Ds[0];
+        elements.modelInfo.innerHTML = `
+            <div><strong>模型信息:</strong></div>
+            <div>文件格式: ${file3D.format || 'N/A'}</div>
+            <div>文件大小: ${file3D.fileSize ? formatFileSize(file3D.fileSize) : 'N/A'}</div>
+            <div>下载地址: ${file3D.modelUrl ? '可用' : '不可用'}</div>
+            <div>预览图: ${file3D.previewImageUrl ? '可用' : '不可用'}</div>
+        `;
+    } else {
+        elements.modelInfo.innerHTML = `
+            <div><strong>模型信息:</strong></div>
+            <div>暂无模型文件信息</div>
+        `;
     }
 }
 

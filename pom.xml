@@ -19,7 +19,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.boot.version>2.6.15</spring.boot.version>
         <mysql.version>8.0.33</mysql.version>
-        <mybatis.version>3.0.2</mybatis.version>
+        <mybatis.version>2.3.1</mybatis.version>
         <jackson.version>2.15.2</jackson.version>
         <commons.fileupload.version>1.5</commons.fileupload.version>
         <commons.io.version>2.11.0</commons.io.version>
