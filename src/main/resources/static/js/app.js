@@ -37,7 +37,7 @@ const elements = {
     resultPanel: document.getElementById('result-panel'),
     modelInfo: document.getElementById('model-info'),
     
-    // 结果按钮
+    // 预览相关
     previewBtn: document.getElementById('preview-btn'),
     downloadBtn: document.getElementById('download-btn'),
     
@@ -45,7 +45,6 @@ const elements = {
     previewModal: document.getElementById('preview-modal'),
     closePreview: document.getElementById('close-preview'),
     modelPreviewImg: document.getElementById('model-preview-img'),
-    previewControlBtns: document.querySelectorAll('.preview-control-btn'),
     
     // 加载覆盖层
     loadingOverlay: document.getElementById('loading-overlay')
@@ -235,23 +234,32 @@ function setupFileUpload() {
     const fileInput = elements.imageInput;
     const uploadArea = elements.fileUploadArea;
     
-    // 点击上传
-    uploadArea.addEventListener('click', () => {
+    // 点击上传区域触发文件选择
+    uploadArea.addEventListener('click', (event) => {
+        // 防止事件冒泡和重复触发
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // 只有在没有预览图片时才触发文件选择
         if (!elements.imagePreview.style.display || elements.imagePreview.style.display === 'none') {
             fileInput.click();
         }
     });
     
-    // 文件选择
+    // 文件选择变化事件
     fileInput.addEventListener('change', handleFileSelect);
     
-    // 拖拽上传
+    // 拖拽上传事件
     uploadArea.addEventListener('dragover', handleDragOver);
     uploadArea.addEventListener('dragleave', handleDragLeave);
     uploadArea.addEventListener('drop', handleFileDrop);
     
-    // 移除图片
-    elements.removeImage.addEventListener('click', removeSelectedImage);
+    // 移除图片按钮事件
+    elements.removeImage.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        removeSelectedImage();
+    });
 }
 
 function handleFileSelect(event) {
@@ -342,18 +350,6 @@ function setupEventListeners() {
         if (e.target === elements.previewModal) {
             hidePreviewModal();
         }
-    });
-    
-    // 预览控制按钮
-    elements.previewControlBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const angle = btn.dataset.angle;
-            changePreviewAngle(angle);
-            
-            // 更新按钮状态
-            elements.previewControlBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
     });
     
     // ESC 键关闭模态框
@@ -510,13 +506,9 @@ async function showModelPreview() {
     try {
         showLoading(true);
         
-        const previewUrl = `/api/v1/ai3d/preview/${currentTaskId}?angle=front&size=medium`;
+        const previewUrl = `/api/v1/ai3d/preview/${currentTaskId}?size=medium`;
         elements.modelPreviewImg.src = previewUrl;
         elements.previewModal.style.display = 'flex';
-        
-        // 重置预览控制按钮
-        elements.previewControlBtns.forEach(btn => btn.classList.remove('active'));
-        elements.previewControlBtns[0].classList.add('active'); // 默认选中第一个
         
     } catch (error) {
         console.error('预览加载失败:', error);
@@ -530,12 +522,7 @@ function hidePreviewModal() {
     elements.previewModal.style.display = 'none';
 }
 
-function changePreviewAngle(angle) {
-    if (!currentTaskId) return;
-    
-    const previewUrl = `/api/v1/ai3d/preview/${currentTaskId}?angle=${angle}&size=medium`;
-    elements.modelPreviewImg.src = previewUrl;
-}
+// changePreviewAngle函数已移除，因为不再需要角度切换
 
 // 模型下载
 function downloadModel() {
