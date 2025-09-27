@@ -180,6 +180,10 @@ body {
     line-height: 1.6;
 }
 
+.card-content p.card-value {
+    color: white !important;
+}
+
 .card-features {
     display: flex;
     gap: 0.5rem;
@@ -215,8 +219,8 @@ body {
 }
 
 .back-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 2px solid transparent;
     color: white;
     padding: 0.75rem 1.5rem;
     border-radius: 10px;
@@ -227,18 +231,20 @@ body {
     gap: 0.5rem;
     font-size: 1rem;
     font-weight: 500;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
 }
 
 .back-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
     transform: translateX(-3px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
 }
 
 .page-header h2 {
-    color: white;
+    color: #333;
     font-size: 2rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-weight: 600;
+    text-shadow: none;
 }
 
 /* 生成页面样式 */
@@ -883,6 +889,37 @@ body {
     color: #333;
 }
 
+.history-empty .btn {
+    margin-top: 2rem;
+    padding: 1rem 2.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+    transform: translateY(0);
+}
+
+.history-empty .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+.history-empty .btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
 .history-list {
     display: grid;
     gap: 1rem;
@@ -1133,6 +1170,7 @@ body {
     font-size: 2rem;
     font-weight: bold;
     margin: 0;
+    color: white !important;
 }
 
 /* 系统健康状态 */

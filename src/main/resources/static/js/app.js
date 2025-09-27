@@ -28,6 +28,27 @@ function backToHome() {
     document.getElementById('text-generation-page').style.display = 'none';
     // 隐藏图片生成页面
     document.getElementById('image-generation-page').style.display = 'none';
+    
+    // 恢复首页状态
+    const heroSection = document.querySelector('.hero');
+    const tabsSection = document.querySelector('.generation-tabs');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const adminSection = document.getElementById('admin-section');
+    
+    if (heroSection) heroSection.style.display = 'block';
+    if (tabsSection) tabsSection.style.display = 'block';
+    tabContents.forEach(content => content.style.display = 'block');
+    if (elements.historySection) elements.historySection.style.display = 'none';
+    if (adminSection) adminSection.style.display = 'none';
+    
+    // 更新导航状态
+    elements.navLinks.forEach(navLink => {
+        navLink.classList.remove('active');
+        if (navLink.getAttribute('href') === '#home') {
+            navLink.classList.add('active');
+        }
+    });
+    
     // 隐藏状态面板
     if (elements.statusPanel) {
         hideStatusPanel();
@@ -110,6 +131,7 @@ function initializeApp() {
     setupCharacterCounters();
     setupEventListeners();
     setupHistoryPage();
+    initializeAdminDashboard();
     initHealthStatusModal();
     
     console.log('3D模型生成器已初始化');

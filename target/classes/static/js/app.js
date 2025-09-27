@@ -28,6 +28,28 @@ function backToHome() {
     document.getElementById('text-generation-page').style.display = 'none';
     // 隐藏图片生成页面
     document.getElementById('image-generation-page').style.display = 'none';
+    
+    // 恢复首页状态
+    const heroSection = document.querySelector('.hero');
+    const tabsSection = document.querySelector('.generation-tabs');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const historySection = document.getElementById('history-section');
+    const adminSection = document.getElementById('admin-section');
+    
+    if (heroSection) heroSection.style.display = 'block';
+    if (tabsSection) tabsSection.style.display = 'block';
+    tabContents.forEach(content => content.style.display = 'block');
+    if (historySection) historySection.style.display = 'none';
+    if (adminSection) adminSection.style.display = 'none';
+    
+    // 更新导航状态
+    elements.navLinks.forEach(navLink => {
+        navLink.classList.remove('active');
+        if (navLink.getAttribute('href') === '#home') {
+            navLink.classList.add('active');
+        }
+    });
+    
     // 隐藏状态面板
     if (elements.statusPanel) {
         hideStatusPanel();
@@ -110,6 +132,7 @@ function initializeApp() {
     setupCharacterCounters();
     setupEventListeners();
     setupHistoryPage();
+    initializeAdminDashboard();
     initHealthStatusModal();
     
     console.log('3D模型生成器已初始化');
@@ -136,33 +159,33 @@ function setupNavigation() {
 }
 
 function handlePageSwitch(page) {
-    // 隐藏所有主要内容区域
+    // 获取所有主要内容区域
     const heroSection = document.querySelector('.hero');
     const tabsSection = document.querySelector('.generation-tabs');
     const tabContents = document.querySelectorAll('.tab-content');
+    const historySection = document.getElementById('history-section');
     const adminSection = document.getElementById('admin-section');
+    
+    // 首先隐藏所有内容区域
+    if (heroSection) heroSection.style.display = 'none';
+    if (tabsSection) tabsSection.style.display = 'none';
+    tabContents.forEach(content => content.style.display = 'none');
+    if (historySection) historySection.style.display = 'none';
+    if (adminSection) adminSection.style.display = 'none';
     
     if (page === 'home') {
         // 显示首页内容
-        heroSection.style.display = 'block';
-        tabsSection.style.display = 'block';
+        if (heroSection) heroSection.style.display = 'block';
+        if (tabsSection) tabsSection.style.display = 'block';
         tabContents.forEach(content => content.style.display = 'block');
-        elements.historySection.style.display = 'none';
-        if (adminSection) adminSection.style.display = 'none';
     } else if (page === 'history') {
         // 显示历史记录页面
-        heroSection.style.display = 'none';
-        tabsSection.style.display = 'none';
-        tabContents.forEach(content => content.style.display = 'none');
-        elements.historySection.style.display = 'block';
-        if (adminSection) adminSection.style.display = 'none';
-        loadHistoryData();
+        if (historySection) {
+            historySection.style.display = 'block';
+            loadHistoryData();
+        }
     } else if (page === 'admin') {
         // 显示管理员页面
-        heroSection.style.display = 'none';
-        tabsSection.style.display = 'none';
-        tabContents.forEach(content => content.style.display = 'none');
-        elements.historySection.style.display = 'none';
         if (adminSection) {
             adminSection.style.display = 'block';
             loadAdminDashboard();
@@ -192,11 +215,14 @@ function switchTab(tabId) {
     });
     
     // 如果切换到历史记录页面，显示历史记录区域并加载数据
+    const historySection = document.getElementById('history-section');
     if (tabId === 'history') {
-        elements.historySection.style.display = 'block';
-        loadHistoryData();
+        if (historySection) {
+            historySection.style.display = 'block';
+            loadHistoryData();
+        }
     } else {
-        elements.historySection.style.display = 'none';
+        if (historySection) historySection.style.display = 'none';
     }
 }
 
