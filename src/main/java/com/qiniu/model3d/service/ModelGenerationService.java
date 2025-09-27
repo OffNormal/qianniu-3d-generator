@@ -1,5 +1,6 @@
 package com.qiniu.model3d.service;
 
+import com.qiniu.model3d.dto.CacheResult;
 import com.qiniu.model3d.dto.TextGenerationRequest;
 import com.qiniu.model3d.entity.ModelTask;
 import com.qiniu.model3d.repository.ModelTaskRepository;
@@ -18,10 +19,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 3D模型生成服务
@@ -40,6 +44,15 @@ public class ModelGenerationService {
     @Autowired
     private AIModelService aiModelService;
 
+    @Autowired
+    private CacheService cacheService;
+    
+    @Autowired
+    private SimilarityService similarityService;
+
+    @Autowired
+    private CacheMetricsService cacheMetricsService;
+
     @Value("${app.file.upload-dir}")
     private String uploadDir;
 
@@ -55,6 +68,9 @@ public class ModelGenerationService {
     @Value("${app.ai.service-type:default}")
     private String aiServiceType;
 
+    @Value("${app.cache.similarity-threshold:0.8}")
+    private double similarityThreshold;
+
     // 支持的图片格式
     private static final List<String> SUPPORTED_IMAGE_TYPES = Arrays.asList(
         "image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/webp"
@@ -67,25 +83,65 @@ public class ModelGenerationService {
         // 验证输入
         validateTextRequest(request);
         
-        // 创建任务
-        ModelTask task = new ModelTask();
-        task.setTaskId(generateTaskId());
-        task.setType(ModelTask.TaskType.TEXT);
-        task.setInputText(request.getText());
-        task.setComplexity(request.getComplexity());
-        task.setOutputFormat(request.getFormat());
-        task.setStatus(ModelTask.TaskStatus.PENDING);
-        task.setProgress(0);
-        task.setClientIp(clientIp);
-        task.setCreatedAt(LocalDateTime.now());
+        // 1. 缓存查找
+        Optional<ModelTask> exactMatch = cacheService.findExactMatch(
+            request.getText(), 
+            ModelTask.TaskType.TEXT,
+            request.getComplexity() != null ? request.getComplexity().toString() : null, 
+            request.getFormat() != null ? request.getFormat().toString() : null
+        );
         
-        // 保存任务
-        task = modelTaskRepository.save(task);
+        if (exactMatch.isPresent()) {
+            ModelTask sourceTask = exactMatch.get();
+            // 记录缓存命中
+            cacheMetricsService.recordCacheHit(sourceTask.getId().toString(), "text_exact", 0);
+            
+            // 完全匹配缓存命中
+            ModelTask cacheTask = createCacheTask(sourceTask, clientIp, 1.0);
+            copyModelFilesAsync(sourceTask, cacheTask);
+            
+            logger.info("完全匹配缓存命中: taskId={}, sourceTaskId={}", 
+                       cacheTask.getTaskId(), sourceTask.getTaskId());
+            return cacheTask;
+        }
+        
+        // 2. 相似度匹配查找
+        List<CacheResult> similarMatches = cacheService.findSimilarMatches(
+            request.getText(), 
+            ModelTask.TaskType.TEXT,
+            request.getComplexity() != null ? request.getComplexity().toString() : null, 
+            request.getFormat() != null ? request.getFormat().toString() : null,
+            similarityThreshold
+        );
+        
+        if (!similarMatches.isEmpty()) {
+            CacheResult bestMatch = similarMatches.get(0);
+            // 使用SimilarityService的智能阈值判断
+            if (similarityService.isHighSimilarity(bestMatch.getSimilarity()) || 
+                similarityService.isExactMatch(bestMatch.getSimilarity())) {
+                // 记录相似度缓存命中
+                cacheMetricsService.recordCacheHit(bestMatch.getTask().getId().toString(), "text_similar", 0);
+                
+                ModelTask cacheTask = createCacheTask(bestMatch.getTask(), clientIp, bestMatch.getSimilarity());
+                copyModelFilesAsync(bestMatch.getTask(), cacheTask);
+                
+                String level = similarityService.getSimilarityLevel(bestMatch.getSimilarity());
+                logger.info("文本相似度缓存命中: taskId={}, sourceTaskId={}, similarity={}, level={}", 
+                           cacheTask.getTaskId(), bestMatch.getTask().getTaskId(), bestMatch.getSimilarity(), level);
+                return cacheTask;
+            }
+        }
+        
+        // 3. 缓存未命中 - 创建新任务
+        // 记录缓存未命中
+        cacheMetricsService.recordCacheMiss(request.getText(), "text", 0);
+        
+        ModelTask task = createNewTask(request, clientIp);
         
         // 异步处理生成任务
         processTextGenerationAsync(task);
         
-        logger.info("文本生成任务已创建: taskId={}, text={}", task.getTaskId(), request.getText());
+        logger.info("缓存未命中，创建新任务: taskId={}, text={}", task.getTaskId(), request.getText());
         return task;
     }
 
@@ -100,26 +156,71 @@ public class ModelGenerationService {
         // 保存上传的图片
         String imagePath = saveUploadedImage(image);
         
-        // 创建任务
-        ModelTask task = new ModelTask();
-        task.setTaskId(generateTaskId());
-        task.setType(ModelTask.TaskType.IMAGE);
-        task.setInputImagePath(imagePath);
-        task.setInputText(description);
-        task.setComplexity(complexity);
-        task.setOutputFormat(format);
-        task.setStatus(ModelTask.TaskStatus.PENDING);
-        task.setProgress(0);
-        task.setClientIp(clientIp);
-        task.setCreatedAt(LocalDateTime.now());
+        // 1. 图片缓存查找（基于文件内容和描述）
+        String imageHash = calculateFileHash(imagePath);
+        String combinedInput = (description != null ? description : "") + "|" + imageHash;
         
-        // 保存任务
-        task = modelTaskRepository.save(task);
+        Optional<ModelTask> exactMatch = cacheService.findExactMatch(
+            combinedInput, 
+            ModelTask.TaskType.IMAGE,
+            complexity != null ? complexity.toString() : null,
+            format != null ? format.toString() : null
+        );
+        
+        if (exactMatch.isPresent()) {
+            ModelTask sourceTask = exactMatch.get();
+            // 记录图片缓存命中
+            cacheMetricsService.recordCacheHit(sourceTask.getId().toString(), "image_exact", 0);
+            
+            // 完全匹配缓存命中
+            ModelTask cacheTask = createImageCacheTask(sourceTask, clientIp, imagePath, description, 1.0);
+            copyModelFilesAsync(sourceTask, cacheTask);
+            
+            logger.info("图片完全匹配缓存命中: taskId={}, sourceTaskId={}", 
+                       cacheTask.getTaskId(), sourceTask.getTaskId());
+            return cacheTask;
+        }
+        
+        // 2. 相似度匹配查找（基于描述文本）
+        if (description != null && !description.trim().isEmpty()) {
+            List<CacheResult> similarMatches = cacheService.findSimilarMatches(
+                description, 
+                ModelTask.TaskType.IMAGE,
+                complexity != null ? complexity.toString() : null,
+                format != null ? format.toString() : null,
+                similarityThreshold
+            );
+            
+            if (!similarMatches.isEmpty()) {
+                CacheResult bestMatch = similarMatches.get(0);
+                // 对于图片，使用稍微宽松的相似度判断（包含中等相似度）
+                if (similarityService.isHighSimilarity(bestMatch.getSimilarity()) || 
+                    similarityService.isExactMatch(bestMatch.getSimilarity()) ||
+                    similarityService.isMediumSimilarity(bestMatch.getSimilarity())) {
+                    // 记录图片相似度缓存命中
+                    cacheMetricsService.recordCacheHit(bestMatch.getTask().getId().toString(), "image_similar", 0);
+                    
+                    ModelTask cacheTask = createImageCacheTask(bestMatch.getTask(), clientIp, imagePath, description, bestMatch.getSimilarity());
+                    copyModelFilesAsync(bestMatch.getTask(), cacheTask);
+                    
+                    String level = similarityService.getSimilarityLevel(bestMatch.getSimilarity());
+                    logger.info("图片相似度缓存命中: taskId={}, sourceTaskId={}, similarity={}, level={}", 
+                               cacheTask.getTaskId(), bestMatch.getTask().getTaskId(), bestMatch.getSimilarity(), level);
+                    return cacheTask;
+                }
+            }
+        }
+        
+        // 3. 缓存未命中 - 创建新任务
+        // 记录图片缓存未命中
+        cacheMetricsService.recordCacheMiss(description != null ? description : imagePath, "image", 0);
+        
+        ModelTask task = createNewImageTask(imagePath, description, complexity, format, clientIp);
         
         // 异步处理生成任务
         processImageGenerationAsync(task);
         
-        logger.info("图片生成任务已创建: taskId={}, imagePath={}", task.getTaskId(), imagePath);
+        logger.info("图片缓存未命中，创建新任务: taskId={}, imagePath={}", task.getTaskId(), imagePath);
         return task;
     }
 
@@ -227,14 +328,21 @@ public class ModelGenerationService {
             // 生成预览图
             String previewPath = aiModelService.generatePreviewImage(modelPath);
             
+            // 计算文件签名
+            String fileSignature = cacheService.calculateFileSignature(modelPath);
+            
             // 更新任务状态
             task.setStatus(ModelTask.TaskStatus.COMPLETED);
             task.setProgress(100);
             task.setModelFilePath(modelPath);
             task.setPreviewImagePath(previewPath);
+            task.setFileSignature(fileSignature);
             task.setCompletedAt(LocalDateTime.now());
             task.setUpdatedAt(LocalDateTime.now());
             modelTaskRepository.save(task);
+            
+            // 缓存任务结果
+            cacheService.cacheTask(task);
             
             logger.info("文本生成任务完成: {}", task.getTaskId());
             
@@ -275,14 +383,21 @@ public class ModelGenerationService {
             // 生成预览图
             String previewPath = aiModelService.generatePreviewImage(modelPath);
             
+            // 计算文件签名
+            String fileSignature = cacheService.calculateFileSignature(modelPath);
+            
             // 更新任务状态
             task.setStatus(ModelTask.TaskStatus.COMPLETED);
             task.setProgress(100);
             task.setModelFilePath(modelPath);
             task.setPreviewImagePath(previewPath);
+            task.setFileSignature(fileSignature);
             task.setCompletedAt(LocalDateTime.now());
             task.setUpdatedAt(LocalDateTime.now());
             modelTaskRepository.save(task);
+            
+            // 缓存任务结果
+            cacheService.cacheTask(task);
             
             logger.info("图片生成任务完成: {}", task.getTaskId());
             
@@ -411,5 +526,213 @@ public class ModelGenerationService {
         String extension = basePath.substring(basePath.lastIndexOf("."));
         
         return baseDir + "_" + angle + "_" + size + extension;
+    }
+
+    /**
+     * 创建缓存任务
+     */
+    private ModelTask createCacheTask(ModelTask sourceTask, String clientIp, double similarity) {
+        ModelTask cacheTask = new ModelTask();
+        cacheTask.setTaskId(generateTaskId());
+        cacheTask.setType(sourceTask.getType());
+        cacheTask.setInputText(sourceTask.getInputText());
+        cacheTask.setInputImagePath(sourceTask.getInputImagePath());
+        cacheTask.setComplexity(sourceTask.getComplexity());
+        cacheTask.setOutputFormat(sourceTask.getOutputFormat());
+        cacheTask.setStatus(ModelTask.TaskStatus.PROCESSING);
+        cacheTask.setProgress(90); // 缓存任务进度设为90%，等待文件复制完成
+        cacheTask.setClientIp(clientIp);
+        cacheTask.setCreatedAt(LocalDateTime.now());
+        cacheTask.setUpdatedAt(LocalDateTime.now());
+        
+        // 设置缓存相关字段
+        cacheTask.setInputHash(cacheService.calculateInputHash(sourceTask.getInputText(), 
+                                                               sourceTask.getType(),
+                                                               sourceTask.getComplexity() != null ? sourceTask.getComplexity().toString() : null, 
+                                                               sourceTask.getOutputFormat() != null ? sourceTask.getOutputFormat().toString() : null));
+        
+        // 保存任务
+        cacheTask = modelTaskRepository.save(cacheTask);
+        
+        // 更新源任务的引用计数和相似度使用计数
+        cacheService.updateCacheAccess(sourceTask.getTaskId());
+        if (similarity < 1.0) {
+            // 如果不是精确匹配，更新相似度使用计数
+            cacheService.updateSimilarityUsage(sourceTask.getTaskId());
+        }
+        
+        return cacheTask;
+    }
+
+    /**
+     * 创建新任务
+     */
+    private ModelTask createNewTask(TextGenerationRequest request, String clientIp) {
+        ModelTask task = new ModelTask();
+        task.setTaskId(generateTaskId());
+        task.setType(ModelTask.TaskType.TEXT);
+        task.setInputText(request.getText());
+        task.setComplexity(request.getComplexity());
+        task.setOutputFormat(request.getFormat());
+        task.setStatus(ModelTask.TaskStatus.PENDING);
+        task.setProgress(0);
+        task.setClientIp(clientIp);
+        task.setCreatedAt(LocalDateTime.now());
+        
+        // 设置缓存相关字段
+        task.setInputHash(cacheService.calculateInputHash(request.getText(), 
+                                                          ModelTask.TaskType.TEXT,
+                                                          request.getComplexity() != null ? request.getComplexity().toString() : null, 
+                                                          request.getFormat() != null ? request.getFormat().toString() : null));
+        
+        // 保存任务
+        return modelTaskRepository.save(task);
+    }
+
+    /**
+     * 异步复制模型文件
+     */
+    private void copyModelFilesAsync(ModelTask sourceTask, ModelTask targetTask) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                // 复制模型文件
+                String sourceModelPath = sourceTask.getModelFilePath();
+                String sourcePreviewPath = sourceTask.getPreviewImagePath();
+                
+                if (sourceModelPath != null && Files.exists(Paths.get(sourceModelPath))) {
+                    String targetModelPath = generateTargetFilePath(sourceModelPath, targetTask.getTaskId());
+                    Files.copy(Paths.get(sourceModelPath), Paths.get(targetModelPath));
+                    targetTask.setModelFilePath(targetModelPath);
+                }
+                
+                if (sourcePreviewPath != null && Files.exists(Paths.get(sourcePreviewPath))) {
+                    String targetPreviewPath = generateTargetFilePath(sourcePreviewPath, targetTask.getTaskId());
+                    Files.copy(Paths.get(sourcePreviewPath), Paths.get(targetPreviewPath));
+                    targetTask.setPreviewImagePath(targetPreviewPath);
+                }
+                
+                // 计算文件签名
+                if (targetTask.getModelFilePath() != null) {
+                    String fileSignature = cacheService.calculateFileSignature(targetTask.getModelFilePath());
+                    targetTask.setFileSignature(fileSignature);
+                }
+                
+                // 更新任务状态为完成
+                targetTask.setStatus(ModelTask.TaskStatus.COMPLETED);
+                targetTask.setProgress(100);
+                targetTask.setCompletedAt(LocalDateTime.now());
+                targetTask.setUpdatedAt(LocalDateTime.now());
+                modelTaskRepository.save(targetTask);
+                
+                logger.info("缓存文件复制完成: taskId={}", targetTask.getTaskId());
+                
+            } catch (Exception e) {
+                logger.error("缓存文件复制失败: taskId={}", targetTask.getTaskId(), e);
+                
+                targetTask.setStatus(ModelTask.TaskStatus.FAILED);
+                targetTask.setErrorMessage("文件复制失败: " + e.getMessage());
+                targetTask.setUpdatedAt(LocalDateTime.now());
+                modelTaskRepository.save(targetTask);
+            }
+        });
+    }
+
+    /**
+     * 生成目标文件路径
+     */
+    private String generateTargetFilePath(String sourcePath, String taskId) {
+        Path source = Paths.get(sourcePath);
+        String fileName = source.getFileName().toString();
+        String extension = fileName.substring(fileName.lastIndexOf("."));
+        String newFileName = taskId + extension;
+        
+        return source.getParent().resolve(newFileName).toString();
+    }
+
+    /**
+     * 创建图片缓存任务
+     */
+    private ModelTask createImageCacheTask(ModelTask sourceTask, String clientIp, String imagePath, String description, double similarity) {
+        ModelTask cacheTask = new ModelTask();
+        cacheTask.setTaskId(generateTaskId());
+        cacheTask.setType(ModelTask.TaskType.IMAGE);
+        cacheTask.setInputImagePath(imagePath);
+        cacheTask.setInputText(description);
+        cacheTask.setComplexity(sourceTask.getComplexity());
+        cacheTask.setOutputFormat(sourceTask.getOutputFormat());
+        cacheTask.setStatus(ModelTask.TaskStatus.PROCESSING);
+        cacheTask.setProgress(90);
+        cacheTask.setClientIp(clientIp);
+        cacheTask.setCreatedAt(LocalDateTime.now());
+        cacheTask.setUpdatedAt(LocalDateTime.now());
+        
+        // 设置缓存相关字段
+        String imageHash = cacheService.calculateFileSignature(imagePath);
+        String combinedInput = (description != null ? description : "") + "|" + imageHash;
+        cacheTask.setInputHash(cacheService.calculateInputHash(combinedInput, 
+                                                               sourceTask.getType(),
+                                                               sourceTask.getComplexity() != null ? sourceTask.getComplexity().toString() : null, 
+                                                               sourceTask.getOutputFormat() != null ? sourceTask.getOutputFormat().toString() : null));
+        
+        // 保存任务
+        cacheTask = modelTaskRepository.save(cacheTask);
+        
+        // 更新源任务的引用计数和相似度使用计数
+        cacheService.updateCacheAccess(sourceTask.getTaskId());
+        if (similarity < 1.0) {
+            // 如果不是精确匹配，更新相似度使用计数
+            cacheService.updateSimilarityUsage(sourceTask.getTaskId());
+        }
+        
+        return cacheTask;
+    }
+
+    /**
+     * 创建新图片任务
+     */
+    private ModelTask createNewImageTask(String imagePath, String description, ModelTask.Complexity complexity, 
+                                       ModelTask.OutputFormat format, String clientIp) {
+        ModelTask task = new ModelTask();
+        task.setTaskId(generateTaskId());
+        task.setType(ModelTask.TaskType.IMAGE);
+        task.setInputImagePath(imagePath);
+        task.setInputText(description);
+        task.setComplexity(complexity);
+        task.setOutputFormat(format);
+        task.setStatus(ModelTask.TaskStatus.PENDING);
+        task.setProgress(0);
+        task.setClientIp(clientIp);
+        task.setCreatedAt(LocalDateTime.now());
+        
+        // 设置缓存相关字段
+        String imageHash = cacheService.calculateFileSignature(imagePath);
+        String combinedInput = (description != null ? description : "") + "|" + imageHash;
+        task.setInputHash(cacheService.calculateInputHash(combinedInput, 
+                                                          ModelTask.TaskType.IMAGE,
+                                                          complexity != null ? complexity.toString() : null, 
+                                                          format != null ? format.toString() : null));
+        
+        // 保存任务
+        return modelTaskRepository.save(task);
+    }
+
+    /**
+     * 计算文件哈希值
+     */
+    private String calculateFileHash(String filePath) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] fileBytes = Files.readAllBytes(Paths.get(filePath));
+            byte[] hashBytes = md.digest(fileBytes);
+            
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            logger.error("计算文件哈希失败: {}", filePath, e);
+            return filePath; // 降级处理
+        }
     }
 }

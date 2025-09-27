@@ -78,11 +78,51 @@ public class ModelTask {
     @Column(name = "client_ip", length = 45)
     private String clientIp;
 
+    // 缓存相关字段
+    @Column(name = "reference_count")
+    private Integer referenceCount;
+
+    @Column(name = "last_accessed")
+    private LocalDateTime lastAccessed;
+
+    @Column(name = "access_count")
+    private Integer accessCount;
+
+    @Column(name = "file_signature", length = 64)
+    private String fileSignature;
+
+    @Column(name = "input_hash", length = 64)
+    private String inputHash;
+    
+    @Column(name = "cached")
+    private Boolean cached;
+    
+    @Column(name = "cache_hit_count")
+    private Integer cacheHitCount;
+    
+    @Column(name = "similarity_usage_count")
+    private Integer similarityUsageCount;
+    
+    @Column(name = "last_accessed_at")
+    private LocalDateTime lastAccessedAt;
+    
+    @Column(name = "obj_file_path", length = 500)
+    private String objFilePath;
+    
+    @Column(name = "gltf_file_path", length = 500)
+    private String gltfFilePath;
+    
+    @Column(name = "stl_file_path", length = 500)
+    private String stlFilePath;
+
     // 构造函数
     public ModelTask() {
         this.createdAt = LocalDateTime.now();
         this.status = TaskStatus.PENDING;
         this.progress = 0;
+        this.referenceCount = 1;
+        this.accessCount = 1;
+        this.lastAccessed = LocalDateTime.now();
     }
 
     // Getters and Setters
@@ -249,6 +289,139 @@ public class ModelTask {
 
     public void setClientIp(String clientIp) {
         this.clientIp = clientIp;
+    }
+
+    public Integer getReferenceCount() {
+        return referenceCount;
+    }
+
+    public void setReferenceCount(Integer referenceCount) {
+        this.referenceCount = referenceCount;
+    }
+
+    public LocalDateTime getLastAccessed() {
+        return lastAccessed;
+    }
+
+    public void setLastAccessed(LocalDateTime lastAccessed) {
+        this.lastAccessed = lastAccessed;
+    }
+
+    public Integer getAccessCount() {
+        return accessCount;
+    }
+
+    public void setAccessCount(Integer accessCount) {
+        this.accessCount = accessCount;
+    }
+
+    public String getFileSignature() {
+        return fileSignature;
+    }
+
+    public void setFileSignature(String fileSignature) {
+        this.fileSignature = fileSignature;
+    }
+
+    public String getInputHash() {
+        return inputHash;
+    }
+
+    public void setInputHash(String inputHash) {
+        this.inputHash = inputHash;
+    }
+
+    /**
+     * 增加访问计数并更新最后访问时间
+     */
+    public void incrementAccessCount() {
+        this.accessCount = (this.accessCount == null ? 0 : this.accessCount) + 1;
+        this.lastAccessed = LocalDateTime.now();
+    }
+
+    /**
+     * 增加引用计数
+     */
+    public void incrementReferenceCount() {
+        this.referenceCount = (this.referenceCount == null ? 0 : this.referenceCount) + 1;
+    }
+
+    /**
+     * 减少引用计数
+     */
+    public void decrementReferenceCount() {
+        this.referenceCount = Math.max(0, (this.referenceCount == null ? 0 : this.referenceCount) - 1);
+    }
+    
+    public Boolean getCached() {
+        return cached;
+    }
+    
+    public void setCached(Boolean cached) {
+        this.cached = cached;
+    }
+    
+    public Integer getCacheHitCount() {
+        return cacheHitCount;
+    }
+    
+    public void setCacheHitCount(Integer cacheHitCount) {
+        this.cacheHitCount = cacheHitCount;
+    }
+    
+    public Integer getSimilarityUsageCount() {
+        return similarityUsageCount;
+    }
+    
+    public void setSimilarityUsageCount(Integer similarityUsageCount) {
+        this.similarityUsageCount = similarityUsageCount;
+    }
+    
+    public LocalDateTime getLastAccessedAt() {
+        return lastAccessedAt;
+    }
+    
+    public void setLastAccessedAt(LocalDateTime lastAccessedAt) {
+        this.lastAccessedAt = lastAccessedAt;
+    }
+    
+    public String getObjFilePath() {
+        return objFilePath;
+    }
+    
+    public void setObjFilePath(String objFilePath) {
+        this.objFilePath = objFilePath;
+    }
+    
+    public String getGltfFilePath() {
+        return gltfFilePath;
+    }
+    
+    public void setGltfFilePath(String gltfFilePath) {
+        this.gltfFilePath = gltfFilePath;
+    }
+    
+    public String getStlFilePath() {
+        return stlFilePath;
+    }
+    
+    public void setStlFilePath(String stlFilePath) {
+        this.stlFilePath = stlFilePath;
+    }
+    
+    /**
+     * 增加缓存命中计数
+     */
+    public void incrementCacheHitCount() {
+        this.cacheHitCount = (this.cacheHitCount == null ? 0 : this.cacheHitCount) + 1;
+        this.lastAccessedAt = LocalDateTime.now();
+    }
+    
+    /**
+     * 增加相似度使用计数
+     */
+    public void incrementSimilarityUsageCount() {
+        this.similarityUsageCount = (this.similarityUsageCount == null ? 0 : this.similarityUsageCount) + 1;
     }
 
     // 枚举类型定义
