@@ -102,6 +102,7 @@ function handlePageSwitch(page) {
     const heroSection = document.querySelector('.hero');
     const tabsSection = document.querySelector('.generation-tabs');
     const tabContents = document.querySelectorAll('.tab-content');
+    const adminSection = document.getElementById('admin-section');
     
     if (page === 'home') {
         // 显示首页内容
@@ -109,19 +110,25 @@ function handlePageSwitch(page) {
         tabsSection.style.display = 'block';
         tabContents.forEach(content => content.style.display = 'block');
         elements.historySection.style.display = 'none';
+        if (adminSection) adminSection.style.display = 'none';
     } else if (page === 'history') {
         // 显示历史记录页面
         heroSection.style.display = 'none';
         tabsSection.style.display = 'none';
         tabContents.forEach(content => content.style.display = 'none');
         elements.historySection.style.display = 'block';
+        if (adminSection) adminSection.style.display = 'none';
         loadHistoryData();
-    } else if (page === 'help') {
-        // 显示帮助页面（暂时显示首页）
-        heroSection.style.display = 'block';
-        tabsSection.style.display = 'block';
-        tabContents.forEach(content => content.style.display = 'block');
+    } else if (page === 'admin') {
+        // 显示管理员页面
+        heroSection.style.display = 'none';
+        tabsSection.style.display = 'none';
+        tabContents.forEach(content => content.style.display = 'none');
         elements.historySection.style.display = 'none';
+        if (adminSection) {
+            adminSection.style.display = 'block';
+            loadAdminDashboard();
+        }
     }
 }
 
@@ -970,12 +977,16 @@ async function loadHealthStatus() {
             throw new Error('获取健康状态失败');
         }
         
-        const data = await response.json();
+        const result = await response.json();
         
-        // 更新健康状态
-        updateHealthStatus('db-status', data.database);
-        updateHealthStatus('ai-status', data.aiService);
-        updateHealthStatus('storage-status', data.storage);
+        if (result.code === 200 && result.data) {
+            // 更新健康状态
+            updateHealthStatus('db-status', result.data.database);
+            updateHealthStatus('ai-status', result.data.aiService);
+            updateHealthStatus('storage-status', result.data.storage);
+        } else {
+            throw new Error(result.message || '获取健康状态失败');
+        }
         
     } catch (error) {
         console.error('加载健康状态失败:', error);
@@ -1073,13 +1084,22 @@ function updateElement(id, value) {
 function updateHealthStatus(id, status) {
     const element = document.getElementById(id);
     if (element) {
-        element.textContent = status.message || status.status;
+        element.textContent = status.message || status.status || '未知';
         element.className = 'health-status';
         
-        if (status.status === 'healthy' || status.status === 'ok') {
+        if (status.status === 'healthy') {
             element.classList.add('healthy');
-        } else if (status.status === 'error' || status.status === 'failed') {
+        } else if (status.status === 'warning') {
+            element.classList.add('warning');
+        } else if (status.status === 'error') {
             element.classList.add('error');
+        } else {
+            element.classList.add('unknown');
+        }
+        
+        // 设置title属性显示详细信息
+        if (status.details) {
+            element.title = status.details;
         }
     }
 }

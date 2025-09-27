@@ -250,48 +250,116 @@ public class AdminDashboardController {
     private Map<String, Object> getSystemHealthStatus() {
         Map<String, Object> healthStatus = new HashMap<>();
         
+        // 检查数据库连接状态
+        Map<String, Object> databaseStatus = checkDatabaseHealth();
+        healthStatus.put("database", databaseStatus);
+        
+        // 检查AI服务状态
+        Map<String, Object> aiServiceStatus = checkAiServiceHealth();
+        healthStatus.put("aiService", aiServiceStatus);
+        
+        // 检查存储状态
+        Map<String, Object> storageStatus = checkStorageHealth();
+        healthStatus.put("storage", storageStatus);
+        
+        return healthStatus;
+    }
+    
+    /**
+     * 检查数据库健康状态
+     */
+    private Map<String, Object> checkDatabaseHealth() {
+        Map<String, Object> status = new HashMap<>();
         try {
-            // 检查最近24小时的成功率
+            // 尝试执行一个简单的数据库查询来检查连接
+            Long count = taskEvaluationRepository.count();
+            status.put("status", "healthy");
+            status.put("message", "正常");
+            status.put("details", "数据库连接正常，共有 " + count + " 条记录");
+        } catch (Exception e) {
+            logger.error("数据库健康检查失败", e);
+            status.put("status", "error");
+            status.put("message", "连接失败");
+            status.put("details", "数据库连接异常: " + e.getMessage());
+        }
+        return status;
+    }
+    
+    /**
+     * 检查AI服务健康状态
+     */
+    private Map<String, Object> checkAiServiceHealth() {
+        Map<String, Object> status = new HashMap<>();
+        try {
+            // 检查最近24小时的AI服务成功率
             LocalDateTime yesterday = LocalDateTime.now().minusDays(1);
             LocalDateTime now = LocalDateTime.now();
             
             Long totalTasks = taskEvaluationRepository.countTasksByDateRange(yesterday, now);
             Long successTasks = taskEvaluationRepository.countTasksByStatusAndDateRange("DONE", yesterday, now);
             
-            double successRate = totalTasks > 0 ? (double) successTasks / totalTasks * 100 : 0.0;
-            
-            // 健康状态评估
-            String status;
-            if (successRate >= 90) {
-                status = "excellent";
-            } else if (successRate >= 80) {
-                status = "good";
-            } else if (successRate >= 70) {
-                status = "warning";
+            if (totalTasks > 0) {
+                double successRate = (double) successTasks / totalTasks * 100;
+                if (successRate >= 80) {
+                    status.put("status", "healthy");
+                    status.put("message", "正常");
+                    status.put("details", String.format("24小时成功率: %.1f%%", successRate));
+                } else if (successRate >= 60) {
+                    status.put("status", "warning");
+                    status.put("message", "警告");
+                    status.put("details", String.format("24小时成功率较低: %.1f%%", successRate));
+                } else {
+                    status.put("status", "error");
+                    status.put("message", "异常");
+                    status.put("details", String.format("24小时成功率过低: %.1f%%", successRate));
+                }
             } else {
-                status = "critical";
+                status.put("status", "healthy");
+                status.put("message", "正常");
+                status.put("details", "暂无任务数据");
             }
-            
-            healthStatus.put("status", status);
-            healthStatus.put("successRate", successRate);
-            healthStatus.put("totalTasks24h", totalTasks);
-            healthStatus.put("successTasks24h", successTasks);
-            
-            // 检查平均响应时间
-            Double avgDuration = taskEvaluationRepository.getAverageDurationByDateRange(yesterday, now);
-            healthStatus.put("avgResponseTime", avgDuration != null ? avgDuration : 0.0);
-            
-            // 检查错误率
-            Long failedTasks = taskEvaluationRepository.countTasksByStatusAndDateRange("FAIL", yesterday, now);
-            double errorRate = totalTasks > 0 ? (double) failedTasks / totalTasks * 100 : 0.0;
-            healthStatus.put("errorRate", errorRate);
-            
         } catch (Exception e) {
-            logger.error("计算系统健康状态失败", e);
-            healthStatus.put("status", "unknown");
-            healthStatus.put("error", e.getMessage());
+            logger.error("AI服务健康检查失败", e);
+            status.put("status", "error");
+            status.put("message", "检查失败");
+            status.put("details", "AI服务状态检查异常: " + e.getMessage());
         }
-        
-        return healthStatus;
+        return status;
+    }
+    
+    /**
+     * 检查存储健康状态
+     */
+    private Map<String, Object> checkStorageHealth() {
+        Map<String, Object> status = new HashMap<>();
+        try {
+            // 检查磁盘空间
+            java.io.File root = new java.io.File("/");
+            long totalSpace = root.getTotalSpace();
+            long freeSpace = root.getFreeSpace();
+            long usedSpace = totalSpace - freeSpace;
+            
+            double usagePercent = (double) usedSpace / totalSpace * 100;
+            
+            if (usagePercent < 80) {
+                status.put("status", "healthy");
+                status.put("message", "正常");
+                status.put("details", String.format("磁盘使用率: %.1f%%", usagePercent));
+            } else if (usagePercent < 90) {
+                status.put("status", "warning");
+                status.put("message", "警告");
+                status.put("details", String.format("磁盘使用率较高: %.1f%%", usagePercent));
+            } else {
+                status.put("status", "error");
+                status.put("message", "空间不足");
+                status.put("details", String.format("磁盘使用率过高: %.1f%%", usagePercent));
+            }
+        } catch (Exception e) {
+            logger.error("存储健康检查失败", e);
+            status.put("status", "error");
+            status.put("message", "检查失败");
+            status.put("details", "存储状态检查异常: " + e.getMessage());
+        }
+        return status;
     }
 }

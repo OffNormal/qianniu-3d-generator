@@ -1071,6 +1071,11 @@ body {
     color: white;
 }
 
+.health-status.warning {
+    background: #ffc107;
+    color: #856404;
+}
+
 .health-status.error {
     background: #dc3545;
     color: white;
