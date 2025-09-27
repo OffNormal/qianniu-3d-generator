@@ -73,6 +73,7 @@ function initializeApp() {
     setupCharacterCounters();
     setupEventListeners();
     setupHistoryPage();
+    initHealthStatusModal();
     
     console.log('3D模型生成器已初始化');
 }
@@ -1101,6 +1102,12 @@ function updateHealthStatus(id, status) {
         if (status.details) {
             element.title = status.details;
         }
+        
+        // 添加点击事件显示详细信息弹窗
+        element.onclick = () => showHealthStatusModal(id, status);
+        
+        // 存储状态数据供弹窗使用
+        element.dataset.healthStatus = JSON.stringify(status);
     }
 }
 
@@ -1121,4 +1128,152 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// 健康状态弹窗相关函数
+function showHealthStatusModal(elementId, status) {
+    const modal = document.getElementById('health-modal-overlay');
+    const title = document.getElementById('health-modal-title');
+    const label = document.getElementById('health-modal-label');
+    const statusElement = document.getElementById('health-modal-status');
+    const details = document.getElementById('health-modal-details');
+    const suggestions = document.getElementById('health-modal-suggestions');
+    const suggestionsList = document.getElementById('health-modal-suggestions-list');
+    
+    // 获取健康状态类型的中文名称
+    const statusTypeMap = {
+        'db-status': '数据库连接',
+        'ai-status': 'AI服务状态',
+        'storage-status': '存储空间'
+    };
+    
+    // 获取状态的中文描述
+    const statusTextMap = {
+        'healthy': '正常',
+        'warning': '警告',
+        'error': '错误',
+        'unknown': '未知'
+    };
+    
+    // 设置弹窗内容
+    title.textContent = `${statusTypeMap[elementId] || '系统状态'} - 详细信息`;
+    label.textContent = statusTypeMap[elementId] || '状态类型';
+    
+    // 设置状态显示
+    const statusText = statusTextMap[status.status] || status.status || '未知';
+    statusElement.textContent = statusText;
+    statusElement.className = 'health-detail-status';
+    
+    if (status.status === 'healthy') {
+        statusElement.style.background = '#28a745';
+        statusElement.style.color = 'white';
+    } else if (status.status === 'warning') {
+        statusElement.style.background = '#ffc107';
+        statusElement.style.color = '#856404';
+    } else if (status.status === 'error') {
+        statusElement.style.background = '#dc3545';
+        statusElement.style.color = 'white';
+    } else {
+        statusElement.style.background = '#6c757d';
+        statusElement.style.color = 'white';
+    }
+    
+    // 设置详细信息
+    let detailsText = status.details || status.message || '暂无详细信息';
+    
+    // 根据不同的状态类型和状态，提供更详细的信息
+    if (elementId === 'storage-status' && status.status === 'warning') {
+        detailsText = status.details || `存储空间使用率较高，当前使用率: ${status.usage || '未知'}`;
+    } else if (elementId === 'db-status' && status.status === 'error') {
+        detailsText = status.details || '数据库连接失败，请检查数据库服务是否正常运行';
+    } else if (elementId === 'ai-status' && status.status === 'error') {
+        detailsText = status.details || 'AI服务连接失败，请检查AI服务配置和网络连接';
+    }
+    
+    details.textContent = detailsText;
+    
+    // 设置建议操作
+    const suggestionMap = {
+        'db-status': {
+            'error': [
+                '检查数据库服务是否正常运行',
+                '验证数据库连接配置',
+                '检查网络连接',
+                '查看数据库日志获取更多信息'
+            ],
+            'warning': [
+                '监控数据库性能指标',
+                '检查数据库连接池配置',
+                '优化数据库查询'
+            ]
+        },
+        'ai-status': {
+            'error': [
+                '检查AI服务配置',
+                '验证API密钥和端点',
+                '检查网络连接',
+                '联系AI服务提供商'
+            ],
+            'warning': [
+                '监控AI服务响应时间',
+                '检查API调用频率限制',
+                '优化请求参数'
+            ]
+        },
+        'storage-status': {
+            'warning': [
+                '清理不必要的文件',
+                '扩展存储容量',
+                '设置文件自动清理策略',
+                '监控存储使用趋势'
+            ],
+            'error': [
+                '立即清理存储空间',
+                '紧急扩展存储容量',
+                '停止非关键服务',
+                '联系系统管理员'
+            ]
+        }
+    };
+    
+    const currentSuggestions = suggestionMap[elementId]?.[status.status];
+    if (currentSuggestions && currentSuggestions.length > 0) {
+        suggestions.style.display = 'block';
+        suggestionsList.innerHTML = currentSuggestions.map(suggestion => 
+            `<li>${suggestion}</li>`
+        ).join('');
+    } else {
+        suggestions.style.display = 'none';
+    }
+    
+    // 显示弹窗
+    modal.style.display = 'flex';
+}
+
+function hideHealthStatusModal() {
+    const modal = document.getElementById('health-modal-overlay');
+    modal.style.display = 'none';
+}
+
+// 初始化弹窗事件监听器
+function initHealthStatusModal() {
+    const modal = document.getElementById('health-modal-overlay');
+    const closeButton = document.getElementById('health-modal-close');
+    
+    // 点击关闭按钮
+    closeButton.addEventListener('click', hideHealthStatusModal);
+    
+    // 点击遮罩层关闭弹窗
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            hideHealthStatusModal();
+        }
+    });
+    
+    // ESC键关闭弹窗
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+            hideHealthStatusModal();
+        }
+    });
 }
