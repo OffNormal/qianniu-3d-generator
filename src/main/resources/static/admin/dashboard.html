@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D模型生成系统 - 管理后台</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-change {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        
+        .positive { color: #10b981; }
+        .negative { color: #ef4444; }
+        .neutral { color: #6b7280; }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 1rem;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .table-header h3 {
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .table-content {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 0.75rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-done { background: #dcfce7; color: #166534; }
+        .status-fail { background: #fee2e2; color: #991b1b; }
+        .status-submitted { background: #fef3c7; color: #92400e; }
+        
+        .health-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .health-excellent { background: #10b981; }
+        .health-good { background: #3b82f6; }
+        .health-warning { background: #f59e0b; }
+        .health-critical { background: #ef4444; }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.2s ease;
+        }
+        
+        .refresh-btn:hover {
+            background: #5a67d8;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>3D模型生成系统 - 管理后台</h1>
+    </div>
+    
+    <div class="container">
+        <!-- 统计卡片 -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="loading">加载中...</div>
+        </div>
+        
+        <!-- 图表区域 -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>任务趋势图</h3>
+                <canvas id="trendChart" width="400" height="200"></canvas>
+            </div>
+            
+            <div class="chart-card">
+                <h3>任务状态分布</h3>
+                <canvas id="statusChart" width="200" height="200"></canvas>
+            </div>
+        </div>
+        
+        <!-- 最近任务表格 -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3>最近任务</h3>
+                <button class="refresh-btn" onclick="loadRecentTasks()">刷新</button>
+            </div>
+            <div class="table-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>任务ID</th>
+                            <th>提示词</th>
+                            <th>状态</th>
+                            <th>耗时</th>
+                            <th>评分</th>
+                            <th>创建时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tasksTableBody">
+                        <tr>
+                            <td colspan="6" class="loading">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let trendChart = null;
+        let statusChart = null;
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+            loadRecentTasks();
+            
+            // 每30秒自动刷新数据
+            setInterval(loadDashboardData, 30000);
+        });
+        
+        // 加载仪表板数据
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/admin/dashboard/overview');
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateStatsCards(result.data);
+                    updateCharts(result.data);
+                } else {
+                    console.error('加载数据失败:', result.message);
+                }
+            } catch (error) {
+                console.error('请求失败:', error);
+            }
+        }
+        
+        // 更新统计卡片
+        function updateStatsCards(data) {
+            const today = data.today;
+            const week = data.thisWeek;
+            const healthStatus = data.healthStatus;
+            
+            const statsHtml = `
+                <div class="stat-card">
+                    <h3>今日任务</h3>
+                    <div class="stat-value">${today.totalTasks || 0}</div>
+                    <div class="stat-change neutral">成功率: ${(today.successRate || 0).toFixed(1)}%</div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>本周任务</h3>
+                    <div class="stat-value">${week.totalTasks || 0}</div>
+                    <div class="stat-change neutral">成功率: ${(week.successRate || 0).toFixed(1)}%</div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>系统健康</h3>
+                    <div class="stat-value">
+                        <span class="health-indicator health-${healthStatus.status}"></span>
+                        ${getHealthStatusText(healthStatus.status)}
+                    </div>
+                    <div class="stat-change neutral">24h成功率: ${(healthStatus.successRate || 0).toFixed(1)}%</div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>平均响应时间</h3>
+                    <div class="stat-value">${(healthStatus.avgResponseTime || 0).toFixed(1)}s</div>
+                    <div class="stat-change neutral">错误率: ${(healthStatus.errorRate || 0).toFixed(1)}%</div>
+                </div>
+            `;
+            
+            document.getElementById('statsGrid').innerHTML = statsHtml;
+        }
+        
+        // 更新图表
+        function updateCharts(data) {
+            updateTrendChart(data.recentTrends || []);
+            updateStatusChart(data.today || {});
+        }
+        
+        // 更新趋势图
+        function updateTrendChart(trends) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            
+            if (trendChart) {
+                trendChart.destroy();
+            }
+            
+            const labels = trends.map(t => t.metricDate).reverse();
+            const totalData = trends.map(t => t.totalTasks).reverse();
+            const successData = trends.map(t => t.successTasks).reverse();
+            
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '总任务',
+                        data: totalData,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '成功任务',
+                        data: successData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 更新状态图
+        function updateStatusChart(todayData) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            
+            if (statusChart) {
+                statusChart.destroy();
+            }
+            
+            statusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['成功', '失败', '处理中'],
+                    datasets: [{
+                        data: [
+                            todayData.successTasks || 0,
+                            todayData.failedTasks || 0,
+                            todayData.pendingTasks || 0
+                        ],
+                        backgroundColor: [
+                            '#10b981',
+                            '#ef4444',
+                            '#f59e0b'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        // 加载最近任务
+        async function loadRecentTasks() {
+            try {
+                const response = await fetch('/admin/dashboard/tasks?size=10');
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateTasksTable(result.data.content || []);
+                } else {
+                    console.error('加载任务列表失败:', result.message);
+                }
+            } catch (error) {
+                console.error('请求失败:', error);
+            }
+        }
+        
+        // 更新任务表格
+        function updateTasksTable(tasks) {
+            const tbody = document.getElementById('tasksTableBody');
+            
+            if (tasks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="loading">暂无数据</td></tr>';
+                return;
+            }
+            
+            const tasksHtml = tasks.map(task => `
+                <tr>
+                    <td>${task.jobId}</td>
+                    <td>${truncateText(task.prompt, 30)}</td>
+                    <td><span class="status-badge status-${task.status.toLowerCase()}">${getStatusText(task.status)}</span></td>
+                    <td>${task.durationSeconds ? task.durationSeconds + 's' : '-'}</td>
+                    <td>${task.userRating || '-'}</td>
+                    <td>${formatDateTime(task.createdAt)}</td>
+                </tr>
+            `).join('');
+            
+            tbody.innerHTML = tasksHtml;
+        }
+        
+        // 辅助函数
+        function getHealthStatusText(status) {
+            const statusMap = {
+                'excellent': '优秀',
+                'good': '良好',
+                'warning': '警告',
+                'critical': '严重',
+                'unknown': '未知'
+            };
+            return statusMap[status] || '未知';
+        }
+        
+        function getStatusText(status) {
+            const statusMap = {
+                'DONE': '完成',
+                'FAIL': '失败',
+                'SUBMITTED': '处理中'
+            };
+            return statusMap[status] || status;
+        }
+        
+        function truncateText(text, maxLength) {
+            if (!text) return '-';
+            return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+        
+        function formatDateTime(dateTime) {
+            if (!dateTime) return '-';
+            return new Date(dateTime).toLocaleString('zh-CN');
+        }
+    </script>
+</body>
+</html>

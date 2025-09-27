@@ -18,6 +18,7 @@
             <nav class="nav">
                 <a href="#home" class="nav-link active">首页</a>
                 <a href="#history" class="nav-link">历史记录</a>
+                <a href="#admin" class="nav-link">管理员</a>
                 <a href="#help" class="nav-link">帮助</a>
             </nav>
         </div>
@@ -83,6 +84,112 @@
                             下一页
                             <i class="fas fa-chevron-right"></i>
                         </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 管理员仪表板页面 -->
+            <section class="admin-section" id="admin-section" style="display: none;">
+                <div class="admin-header">
+                    <h2>管理员仪表板</h2>
+                    <div class="admin-actions">
+                        <button id="refresh-dashboard" class="btn btn-secondary">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新数据
+                        </button>
+                    </div>
+                </div>
+
+                <div class="admin-content">
+                    <!-- 系统概览 -->
+                    <div class="dashboard-overview">
+                        <h3>系统概览</h3>
+                        <div class="overview-cards">
+                            <div class="overview-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h4>今日任务</h4>
+                                    <p class="card-value" id="today-tasks">-</p>
+                                </div>
+                            </div>
+                            <div class="overview-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h4>成功率</h4>
+                                    <p class="card-value" id="success-rate">-</p>
+                                </div>
+                            </div>
+                            <div class="overview-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h4>平均处理时间</h4>
+                                    <p class="card-value" id="avg-time">-</p>
+                                </div>
+                            </div>
+                            <div class="overview-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h4>平均评分</h4>
+                                    <p class="card-value" id="avg-rating">-</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 系统健康状态 -->
+                    <div class="dashboard-health">
+                        <h3>系统健康状态</h3>
+                        <div class="health-indicators">
+                            <div class="health-item">
+                                <span class="health-label">数据库连接</span>
+                                <span class="health-status" id="db-status">检查中...</span>
+                            </div>
+                            <div class="health-item">
+                                <span class="health-label">AI服务状态</span>
+                                <span class="health-status" id="ai-status">检查中...</span>
+                            </div>
+                            <div class="health-item">
+                                <span class="health-label">存储空间</span>
+                                <span class="health-status" id="storage-status">检查中...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 热门提示词 -->
+                    <div class="dashboard-prompts">
+                        <h3>热门提示词</h3>
+                        <div class="prompts-list" id="popular-prompts">
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>加载中...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 系统指标历史 -->
+                    <div class="dashboard-metrics">
+                        <h3>系统指标历史</h3>
+                        <div class="metrics-controls">
+                            <select id="metrics-days" class="filter-select">
+                                <option value="7">最近7天</option>
+                                <option value="30">最近30天</option>
+                                <option value="90">最近90天</option>
+                            </select>
+                        </div>
+                        <div class="metrics-chart" id="metrics-chart">
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>加载图表数据...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

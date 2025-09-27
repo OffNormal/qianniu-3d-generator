@@ -1,6 +1,9 @@
 com\qiniu\model3d\dto\TaskStatusResponse$ModelInfo.class
 com\qiniu\model3d\service\impl\MockAIModelServiceImpl.class
+com\qiniu\model3d\entity\SystemMetrics.class
 com\qiniu\model3d\service\CacheEvictionService.class
+com\qiniu\model3d\dto\EvaluationMetrics.class
+com\qiniu\model3d\dto\TaskEvaluationData.class
 com\qiniu\model3d\service\CacheHealthService$CacheHealthReport.class
 com\qiniu\model3d\controller\ModelGenerationController$1.class
 com\qiniu\model3d\dto\SubmitHunyuanTo3DJobResponse.class
@@ -25,6 +28,7 @@ com\qiniu\model3d\dto\ApiResponse.class
 com\qiniu\model3d\service\CacheService$CacheStatistics.class
 com\qiniu\model3d\service\impl\CacheHealthServiceImpl.class
 com\qiniu\model3d\dto\ViewImage.class
+com\qiniu\model3d\service\EvaluationService.class
 com\qiniu\model3d\dto\TaskStatusResponse.class
 com\qiniu\model3d\service\CacheService.class
 com\qiniu\model3d\dto\TextGenerationRequest.class
@@ -34,6 +38,8 @@ com\qiniu\model3d\service\CacheMetricsService$CacheMetrics.class
 com\qiniu\model3d\service\CacheWarmupService.class
 com\qiniu\model3d\service\CacheMetricsService$CachePerformanceReport.class
 com\qiniu\model3d\service\ModelGenerationService.class
+com\qiniu\model3d\repository\TaskEvaluationRepository.class
+com\qiniu\model3d\entity\TaskEvaluation.class
 com\qiniu\model3d\service\impl\MockAIModelServiceImpl$1.class
 com\qiniu\model3d\dto\File3D.class
 com\qiniu\model3d\dto\SubmitHunyuanTo3DJobRequest.class
@@ -49,9 +55,11 @@ com\qiniu\model3d\entity\ModelTask$TaskType.class
 com\qiniu\model3d\service\SimilarityService.class
 com\qiniu\model3d\service\impl\TencentHunyuanServiceImpl$1.class
 com\qiniu\model3d\service\impl\CacheWarmupServiceImpl.class
+com\qiniu\model3d\scheduler\MetricsScheduler.class
 com\qiniu\model3d\controller\TestController.class
 com\qiniu\model3d\service\impl\TencentAi3dClientImpl.class
 com\qiniu\model3d\controller\ModelGenerationController.class
+com\qiniu\model3d\controller\AdminDashboardController.class
 com\qiniu\model3d\service\impl\CacheServiceImpl.class
 com\qiniu\model3d\service\CacheWarmupService$WarmupStatistics.class
 com\qiniu\model3d\service\CacheHealthService$CachePerformanceCheck.class
@@ -59,5 +67,7 @@ com\qiniu\model3d\service\CacheMetricsService$CacheTrendAnalysis.class
 com\qiniu\model3d\service\impl\CacheMetricsServiceImpl.class
 com\tencentcloudapi\ai3d\v20250513\Ai3dClient.class
 com\qiniu\model3d\repository\ModelTaskRepository.class
+com\qiniu\model3d\dto\EvaluationMetrics$DailyMetrics.class
 com\qiniu\model3d\service\CacheMetricsService.class
+com\qiniu\model3d\repository\SystemMetricsRepository.class
 com\qiniu\model3d\Application.class

@@ -723,7 +723,8 @@ async function loadHistoryData() {
 
 // 显示历史记录数据
 function displayHistoryData(data) {
-    const { content: items, totalPages, number: currentPage, totalElements } = data;
+    // 修复：使用后端实际返回的数据结构
+    const { items, totalPages, page: currentPage, total: totalElements } = data;
     
     if (!items || items.length === 0) {
         showHistoryEmpty(true);
@@ -742,8 +743,8 @@ function displayHistoryData(data) {
         elements.historyList.appendChild(historyItem);
     });
     
-    // 更新分页
-    updateHistoryPagination(totalPages, currentPage + 1, totalElements);
+    // 更新分页 - 注意currentPage已经是1开始的页码
+    updateHistoryPagination(totalPages, currentPage, totalElements);
 }
 
 // 创建历史记录项元素
@@ -875,4 +876,229 @@ function downloadHistoryModel(modelUrl, taskId) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+// ==================== 管理员仪表板功能 ====================
+
+// 初始化管理员仪表板
+function initializeAdminDashboard() {
+    // 刷新按钮事件
+    const refreshBtn = document.getElementById('refresh-dashboard');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            loadAdminDashboard();
+        });
+    }
+    
+    // 指标天数选择器事件
+    const metricsSelect = document.getElementById('metrics-days');
+    if (metricsSelect) {
+        metricsSelect.addEventListener('change', function() {
+            loadMetricsChart(this.value);
+        });
+    }
+}
+
+// 将函数暴露到全局作用域
+window.initializeAdminDashboard = initializeAdminDashboard;
+window.loadAdminDashboard = loadAdminDashboard;
+
+// 显示管理员页面
+function showAdminSection() {
+    // 隐藏其他section
+    hideAllSections();
+    
+    // 显示管理员section
+    const adminSection = document.getElementById('admin-section');
+    if (adminSection) {
+        adminSection.style.display = 'block';
+        loadAdminDashboard();
+    }
+}
+
+// 加载管理员仪表板数据
+async function loadAdminDashboard() {
+    try {
+        // 显示加载状态
+        showAdminLoadingState();
+        
+        // 并行加载所有数据
+        await Promise.all([
+            loadOverviewData(),
+            loadHealthStatus(),
+            loadPopularPrompts(),
+            loadMetricsChart(7)
+        ]);
+        
+    } catch (error) {
+        console.error('加载仪表板数据失败:', error);
+        showAdminErrorState('加载数据失败，请稍后重试');
+    }
+}
+
+// 加载概览数据
+async function loadOverviewData() {
+    try {
+        const response = await fetch('/admin/dashboard/overview');
+        if (!response.ok) {
+            throw new Error('获取概览数据失败');
+        }
+        
+        const data = await response.json();
+        
+        // 更新概览卡片
+        updateElement('today-tasks', data.todayTasks || 0);
+        updateElement('success-rate', (data.successRate || 0) + '%');
+        updateElement('avg-time', (data.avgProcessingTime || 0) + 's');
+        updateElement('avg-rating', (data.avgRating || 0).toFixed(1));
+        
+    } catch (error) {
+        console.error('加载概览数据失败:', error);
+        // 显示默认值
+        updateElement('today-tasks', '暂无数据');
+        updateElement('success-rate', '暂无数据');
+        updateElement('avg-time', '暂无数据');
+        updateElement('avg-rating', '暂无数据');
+    }
+}
+
+// 加载系统健康状态
+async function loadHealthStatus() {
+    try {
+        const response = await fetch('/admin/dashboard/health');
+        if (!response.ok) {
+            throw new Error('获取健康状态失败');
+        }
+        
+        const data = await response.json();
+        
+        // 更新健康状态
+        updateHealthStatus('db-status', data.database);
+        updateHealthStatus('ai-status', data.aiService);
+        updateHealthStatus('storage-status', data.storage);
+        
+    } catch (error) {
+        console.error('加载健康状态失败:', error);
+        // 显示错误状态
+        updateHealthStatus('db-status', { status: 'error', message: '检查失败' });
+        updateHealthStatus('ai-status', { status: 'error', message: '检查失败' });
+        updateHealthStatus('storage-status', { status: 'error', message: '检查失败' });
+    }
+}
+
+// 加载热门提示词
+async function loadPopularPrompts() {
+    try {
+        const response = await fetch('/admin/dashboard/metrics');
+        if (!response.ok) {
+            throw new Error('获取热门提示词失败');
+        }
+        
+        const result = await response.json();
+        const container = document.getElementById('popular-prompts');
+        
+        if (result.code === 200) {
+            const data = result.data.popularPrompts || [];
+            if (data.length > 0) {
+                container.innerHTML = data.map(prompt => `
+                    <div class="prompt-item">
+                        <div class="prompt-text">${escapeHtml(prompt.text)}</div>
+                        <div class="prompt-stats">
+                            <span>使用次数: ${prompt.count}</span>
+                            <span>成功率: ${prompt.successRate}%</span>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<div class="loading"><p>暂无热门提示词数据</p></div>';
+            }
+        } else {
+            container.innerHTML = '<div class="loading"><p>暂无热门提示词数据</p></div>';
+        }
+        
+    } catch (error) {
+        console.error('加载热门提示词失败:', error);
+        const container = document.getElementById('popular-prompts');
+        container.innerHTML = '<div class="loading"><p>加载失败，请稍后重试</p></div>';
+    }
+}
+
+// 加载指标图表
+async function loadMetricsChart(days) {
+    try {
+        const response = await fetch(`/admin/dashboard/metrics?days=${days}`);
+        if (!response.ok) {
+            throw new Error('获取指标数据失败');
+        }
+        
+        const data = await response.json();
+        const container = document.getElementById('metrics-chart');
+        
+        if (data && data.length > 0) {
+            // 这里可以集成图表库（如Chart.js）来显示数据
+            // 暂时显示简单的数据列表
+            container.innerHTML = `
+                <div class="metrics-summary">
+                    <h4>最近${days}天系统指标</h4>
+                    <div class="metrics-list">
+                        ${data.map(metric => `
+                            <div class="metric-item">
+                                <span class="metric-date">${metric.date}</span>
+                                <span class="metric-value">任务数: ${metric.taskCount}</span>
+                                <span class="metric-value">成功率: ${metric.successRate}%</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = '<div class="loading"><p>暂无指标数据</p></div>';
+        }
+        
+    } catch (error) {
+        console.error('加载指标数据失败:', error);
+        const container = document.getElementById('metrics-chart');
+        container.innerHTML = '<div class="loading"><p>加载失败，请稍后重试</p></div>';
+    }
+}
+
+// 管理员工具函数
+function updateElement(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = value;
+    }
+}
+
+function updateHealthStatus(id, status) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = status.message || status.status;
+        element.className = 'health-status';
+        
+        if (status.status === 'healthy' || status.status === 'ok') {
+            element.classList.add('healthy');
+        } else if (status.status === 'error' || status.status === 'failed') {
+            element.classList.add('error');
+        }
+    }
+}
+
+function showAdminLoadingState() {
+    // 重置所有数据显示为加载状态
+    updateElement('today-tasks', '加载中...');
+    updateElement('success-rate', '加载中...');
+    updateElement('avg-time', '加载中...');
+    updateElement('avg-rating', '加载中...');
+}
+
+function showAdminErrorState(message) {
+    console.error(message);
+    // 可以在这里显示全局错误提示
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
