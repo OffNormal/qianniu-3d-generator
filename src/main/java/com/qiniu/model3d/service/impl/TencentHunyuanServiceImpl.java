@@ -332,7 +332,14 @@ public class TencentHunyuanServiceImpl implements AIModelService {
             int responseCode = connection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 try (InputStream inputStream = connection.getInputStream()) {
-                    byte[] fileData = inputStream.readAllBytes();
+                    // 使用ByteArrayOutputStream替代readAllBytes()以避免过时API警告
+                    java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+                    byte[] data = new byte[1024];
+                    int nRead;
+                    while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+                        buffer.write(data, 0, nRead);
+                    }
+                    byte[] fileData = buffer.toByteArray();
                     logger.info("文件下载成功，大小: {} bytes", fileData.length);
                     
                     // 将文件数据转换为Base64编码返回

@@ -6,7 +6,7 @@ import com.qiniu.model3d.repository.ModelTaskRepository;
 import com.qiniu.model3d.service.CacheService;
 import com.qiniu.model3d.service.CacheEvictionService;
 import com.qiniu.model3d.service.CacheMetricsService;
-import com.qiniu.model3d.service.CacheHealthService;
+
 import com.qiniu.model3d.service.SimilarityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,8 +52,7 @@ public class CacheServiceImpl implements CacheService {
     @Autowired
     private CacheMetricsService cacheMetricsService;
 
-    @Autowired
-    private CacheHealthService cacheHealthService;
+
 
     @Value("${cache.enabled:true}")
     private boolean cacheEnabled;

@@ -92,13 +92,13 @@ app:
 # 腾讯云配置
 tencent:
   cloud:
-    secret-id: ${TENCENT_SECRET_ID:AKIDeFlBRWP6arwoTxW2bDDB4nLeksqcYyFL}
-    secret-key: ${TENCENT_SECRET_KEY:2sWyNbuAWo8SesKgu7FRVRl6MVXTHxW3}
+    secret-id: ${TENCENT_SECRET_ID:AKID8HF4h7KK7jDVbUDmCQVNI6h8PehU8mFb}
+    secret-key: ${TENCENT_SECRET_KEY:CA6wnUGsJbgYDgvxocIoBarvlRyHWmHk}
     region: ${TENCENT_REGION:ap-guangzhou}
     # 腾讯混元AI3D服务配置
     ai3d:
-      endpoint: hunyuan.tencentcloudapi.com
-      version: 2023-09-01
+      endpoint: ai3d.tencentcloudapi.com
+      version: 2025-05-13
       timeout: 30000  # 30秒
       retry-count: 60  # 最大重试次数（5分钟轮询）
       generation:
