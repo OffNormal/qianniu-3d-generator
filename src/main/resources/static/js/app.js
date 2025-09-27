@@ -2,6 +2,43 @@
 let currentTaskId = null;
 let statusCheckInterval = null;
 
+// 页面导航函数
+function navigateToTextGeneration() {
+    // 隐藏功能选择卡片
+    document.getElementById('feature-cards').style.display = 'none';
+    // 显示文本生成页面
+    document.getElementById('text-generation-page').style.display = 'block';
+    // 隐藏图片生成页面
+    document.getElementById('image-generation-page').style.display = 'none';
+}
+
+function navigateToImageGeneration() {
+    // 隐藏功能选择卡片
+    document.getElementById('feature-cards').style.display = 'none';
+    // 隐藏文本生成页面
+    document.getElementById('text-generation-page').style.display = 'none';
+    // 显示图片生成页面
+    document.getElementById('image-generation-page').style.display = 'block';
+}
+
+function backToHome() {
+    // 显示功能选择卡片
+    document.getElementById('feature-cards').style.display = 'block';
+    // 隐藏文本生成页面
+    document.getElementById('text-generation-page').style.display = 'none';
+    // 隐藏图片生成页面
+    document.getElementById('image-generation-page').style.display = 'none';
+    // 隐藏状态面板
+    if (elements.statusPanel) {
+        hideStatusPanel();
+    }
+}
+
+// 将函数暴露到全局作用域
+window.navigateToTextGeneration = navigateToTextGeneration;
+window.navigateToImageGeneration = navigateToImageGeneration;
+window.backToHome = backToHome;
+
 // DOM 元素
 const elements = {
     // 导航和标签页
@@ -260,10 +297,10 @@ async function handleImageGeneration(event) {
         requestFormData.append('imageBase64', imageBase64);
         
         // 添加可选参数
-        const resultFormat = formData.get('resultFormat');
+        const format = formData.get('format');
         const enablePBR = formData.get('enablePBR');
-        if (resultFormat) {
-            requestFormData.append('resultFormat', resultFormat);
+        if (format) {
+            requestFormData.append('format', format);
         }
         if (enablePBR) {
             requestFormData.append('enablePBR', enablePBR);

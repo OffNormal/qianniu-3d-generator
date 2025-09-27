@@ -193,134 +193,177 @@
                 </div>
             </section>
 
-            <!-- 生成选项卡 -->
-            <section class="generation-tabs" id="generation-tabs">
-                <div class="tab-buttons">
-                    <button class="tab-btn active" data-tab="text">
-                        <i class="fas fa-keyboard"></i>
-                        文本生成
-                    </button>
-                    <button class="tab-btn" data-tab="image">
-                        <i class="fas fa-image"></i>
-                        图片生成
-                    </button>
-                </div>
-
-                <!-- 文本生成面板 -->
-                <div class="tab-content active" id="text-tab">
-                    <div class="input-panel">
-                        <h3>描述您想要的 3D 模型</h3>
-                        <form id="text-form" class="generation-form">
-                            <div class="form-group">
-                                <label for="text-input">模型描述</label>
-                                <textarea 
-                                    id="text-input" 
-                                    name="text" 
-                                    placeholder="例如：一个现代风格的椅子，有着流线型的设计和金属腿..."
-                                    maxlength="1000"
-                                    required></textarea>
-                                <div class="char-counter">
-                                    <span id="text-counter">0</span>/1000
-                                </div>
+            <!-- 功能选择卡片 -->
+            <section class="feature-cards" id="feature-cards">
+                <div class="cards-container">
+                    <div class="feature-card" onclick="navigateToTextGeneration()">
+                        <div class="card-icon">
+                            <i class="fas fa-keyboard"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>文本生成 3D 模型</h3>
+                            <p>通过文本描述快速生成高质量的 3D 模型</p>
+                            <div class="card-features">
+                                <span class="feature-tag">AI 驱动</span>
+                                <span class="feature-tag">快速生成</span>
+                                <span class="feature-tag">多格式支持</span>
                             </div>
+                        </div>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
 
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="text-complexity">复杂度</label>
-                                    <select id="text-complexity" name="complexity">
-                                        <option value="SIMPLE">简单 (快速生成)</option>
-                                        <option value="MEDIUM" selected>中等 (平衡质量)</option>
-                                        <option value="COMPLEX">复杂 (高质量)</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="text-format">输出格式</label>
-                                    <select id="text-format" name="format">
-                                        <option value="OBJ" selected>OBJ (通用)</option>
-                                        <option value="GLB">GLB (Web/AR)</option>
-                                        <option value="STL">STL (3D打印)</option>
-                                        <option value="PLY">PLY (点云)</option>
-                                        <option value="USDZ">USDZ (iOS AR)</option>
-                                        <option value="FBX">FBX (动画)</option>
-                                        <option value="MP4">MP4 (视频)</option>
-                                    </select>
-                                </div>
+                    <div class="feature-card" onclick="navigateToImageGeneration()">
+                        <div class="card-icon">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>图片生成 3D 模型</h3>
+                            <p>上传图片，AI 智能识别并生成对应的 3D 模型</p>
+                            <div class="card-features">
+                                <span class="feature-tag">图像识别</span>
+                                <span class="feature-tag">智能重建</span>
+                                <span class="feature-tag">高精度</span>
                             </div>
-
-                            <button type="submit" class="generate-btn">
-                                <i class="fas fa-magic"></i>
-                                开始生成
-                            </button>
-                        </form>
+                        </div>
+                        <div class="card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
                     </div>
                 </div>
+            </section>
 
-                <!-- 图片生成面板 -->
-                <div class="tab-content" id="image-tab">
-                    <div class="input-panel">
-                        <h3>上传图片生成 3D 模型</h3>
-                        <form id="image-form" class="generation-form">
+            <!-- 文本生成页面 -->
+            <section class="text-generation-page" id="text-generation-page" style="display: none;">
+                <div class="page-header">
+                    <button class="back-btn" onclick="backToHome()">
+                        <i class="fas fa-arrow-left"></i>
+                        返回首页
+                    </button>
+                    <h2>文本生成 3D 模型</h2>
+                </div>
+                
+                <div class="input-panel">
+                    <h3>描述您想要的 3D 模型</h3>
+                    <form id="text-form" class="generation-form">
+                        <div class="form-group">
+                            <label for="text-input">模型描述</label>
+                            <textarea 
+                                id="text-input" 
+                                name="text" 
+                                placeholder="例如：一个现代风格的椅子，有着流线型的设计和金属腿..."
+                                maxlength="1000"
+                                required></textarea>
+                            <div class="char-counter">
+                                <span id="text-counter">0</span>/1000
+                            </div>
+                        </div>
+
+                        <div class="form-row">
                             <div class="form-group">
-                                <label for="image-input">选择图片</label>
-                                <input type="file" id="image-input" name="image" accept="image/*" required style="display: none;">
-                                <div class="file-upload-area" id="file-upload-area">
-                                    <div class="upload-placeholder">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p>点击选择图片或拖拽到此处</p>
-                                        <small>支持 JPG、PNG、GIF、BMP、WebP 格式，最大 10MB</small>
-                                    </div>
-                                    <div class="image-preview" id="image-preview" style="display: none;">
-                                        <img id="preview-img" src="" alt="预览图片">
-                                        <button type="button" class="remove-image" id="remove-image">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
+                                <label for="text-complexity">复杂度</label>
+                                <select id="text-complexity" name="complexity">
+                                    <option value="SIMPLE">简单 (快速生成)</option>
+                                    <option value="MEDIUM" selected>中等 (平衡质量)</option>
+                                    <option value="COMPLEX">复杂 (高质量)</option>
+                                </select>
                             </div>
 
                             <div class="form-group">
-                                <label for="image-description">补充描述 (可选)</label>
-                                <textarea 
-                                    id="image-description" 
-                                    name="description" 
-                                    placeholder="为图片添加更多描述信息，帮助生成更准确的模型..."
-                                    maxlength="500"></textarea>
-                                <div class="char-counter">
-                                    <span id="desc-counter">0</span>/500
+                                <label for="text-format">输出格式</label>
+                                <select id="text-format" name="format">
+                                    <option value="OBJ" selected>OBJ (通用)</option>
+                                    <option value="GLB">GLB (Web/AR)</option>
+                                    <option value="STL">STL (3D打印)</option>
+                                    <option value="PLY">PLY (点云)</option>
+                                    <option value="USDZ">USDZ (iOS AR)</option>
+                                    <option value="FBX">FBX (动画)</option>
+                                    <option value="MP4">MP4 (视频)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="generate-btn">
+                            <i class="fas fa-magic"></i>
+                            开始生成
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 图片生成页面 -->
+            <section class="image-generation-page" id="image-generation-page" style="display: none;">
+                <div class="page-header">
+                    <button class="back-btn" onclick="backToHome()">
+                        <i class="fas fa-arrow-left"></i>
+                        返回首页
+                    </button>
+                    <h2>图片生成 3D 模型</h2>
+                </div>
+                
+                <div class="input-panel">
+                    <h3>上传图片生成 3D 模型</h3>
+                    <form id="image-form" class="generation-form">
+                        <div class="form-group">
+                            <label for="image-input">选择图片</label>
+                            <input type="file" id="image-input" name="image" accept="image/*" required style="display: none;">
+                            <div class="file-upload-area" id="file-upload-area">
+                                <div class="upload-placeholder">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>点击选择图片或拖拽到此处</p>
+                                    <small>支持 JPG、PNG、GIF、BMP、WebP 格式，最大 10MB</small>
+                                </div>
+                                <div class="image-preview" id="image-preview" style="display: none;">
+                                    <img id="preview-img" src="" alt="预览图片">
+                                    <button type="button" class="remove-image" id="remove-image">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="image-complexity">复杂度</label>
-                                    <select id="image-complexity" name="complexity">
-                                        <option value="SIMPLE">简单 (快速生成)</option>
-                                        <option value="MEDIUM" selected>中等 (平衡质量)</option>
-                                        <option value="COMPLEX">复杂 (高质量)</option>
-                                    </select>
-                                </div>
+                        <div class="form-group">
+                            <label for="image-description">补充描述 (可选)</label>
+                            <textarea 
+                                id="image-description" 
+                                name="description" 
+                                placeholder="为图片添加更多描述信息，帮助生成更准确的模型..."
+                                maxlength="500"></textarea>
+                            <div class="char-counter">
+                                <span id="desc-counter">0</span>/500
+                            </div>
+                        </div>
 
-                                <div class="form-group">
-                                    <label for="image-format">输出格式</label>
-                                    <select id="image-format" name="format">
-                                        <option value="OBJ" selected>OBJ (通用)</option>
-                                        <option value="GLB">GLB (Web/AR)</option>
-                                        <option value="STL">STL (3D打印)</option>
-                                        <option value="PLY">PLY (点云)</option>
-                                        <option value="USDZ">USDZ (iOS AR)</option>
-                                        <option value="FBX">FBX (动画)</option>
-                                        <option value="MP4">MP4 (视频)</option>
-                                    </select>
-                                </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="image-complexity">复杂度</label>
+                                <select id="image-complexity" name="complexity">
+                                    <option value="SIMPLE">简单 (快速生成)</option>
+                                    <option value="MEDIUM" selected>中等 (平衡质量)</option>
+                                    <option value="COMPLEX">复杂 (高质量)</option>
+                                </select>
                             </div>
 
-                            <button type="submit" class="generate-btn">
-                                <i class="fas fa-magic"></i>
-                                开始生成
-                            </button>
-                        </form>
-                    </div>
+                            <div class="form-group">
+                                <label for="image-format">输出格式</label>
+                                <select id="image-format" name="format">
+                                    <option value="OBJ" selected>OBJ (通用)</option>
+                                    <option value="GLB">GLB (Web/AR)</option>
+                                    <option value="STL">STL (3D打印)</option>
+                                    <option value="PLY">PLY (点云)</option>
+                                    <option value="USDZ">USDZ (iOS AR)</option>
+                                    <option value="FBX">FBX (动画)</option>
+                                    <option value="MP4">MP4 (视频)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="generate-btn">
+                            <i class="fas fa-magic"></i>
+                            开始生成
+                        </button>
+                    </form>
                 </div>
             </section>
 
