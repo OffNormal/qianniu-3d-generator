@@ -449,11 +449,16 @@ public class EvaluationService {
     /**
      * 获取热门提示词
      */
-    private List<String> getPopularPrompts(LocalDateTime startTime, LocalDateTime endTime, int limit) {
-        List<Object[]> results = taskEvaluationRepository.getPopularPromptsByCreatedAtBetween(startTime, endTime);
+    private List<EvaluationMetrics.PopularPrompt> getPopularPrompts(LocalDateTime startTime, LocalDateTime endTime, int limit) {
+        List<Object[]> results = taskEvaluationRepository.getPopularPromptsWithSuccessRate(startTime, endTime);
         return results.stream()
                 .limit(limit)
-                .map(row -> (String) row[0])
+                .map(row -> {
+                    String text = (String) row[0];
+                    Integer count = ((Number) row[1]).intValue();
+                    BigDecimal successRate = (BigDecimal) row[2];
+                    return new EvaluationMetrics.PopularPrompt(text, count, successRate);
+                })
                 .collect(Collectors.toList());
     }
 

@@ -123,7 +123,7 @@ public interface TaskEvaluationRepository extends JpaRepository<TaskEvaluation, 
     List<TaskEvaluation> findRecentTasks();
     
     /**
-     * 获取热门提示词（按使用次数排序）
+     * 获取热门提示词（带分页）
      */
     @Query("SELECT t.prompt, COUNT(t) as promptCount FROM TaskEvaluation t " +
            "WHERE t.createdAt BETWEEN :startDate AND :endDate " +
@@ -131,6 +131,19 @@ public interface TaskEvaluationRepository extends JpaRepository<TaskEvaluation, 
     List<Object[]> getPopularPrompts(@Param("startDate") LocalDateTime startDate, 
                                    @Param("endDate") LocalDateTime endDate, 
                                    Pageable pageable);
+
+    /**
+     * 获取热门提示词及其成功率统计
+     */
+    @Query("SELECT t.prompt, " +
+           "COUNT(t) as promptCount, " +
+           "(SUM(CASE WHEN t.status = 'DONE' THEN 1 ELSE 0 END) * 100.0 / COUNT(t)) as successRate " +
+           "FROM TaskEvaluation t " +
+           "WHERE t.createdAt BETWEEN :startDate AND :endDate AND t.prompt IS NOT NULL " +
+           "GROUP BY t.prompt " +
+           "ORDER BY promptCount DESC")
+    List<Object[]> getPopularPromptsWithSuccessRate(@Param("startDate") LocalDateTime startDate, 
+                                                   @Param("endDate") LocalDateTime endDate);
     
     /**
      * 根据状态查询任务（分页）

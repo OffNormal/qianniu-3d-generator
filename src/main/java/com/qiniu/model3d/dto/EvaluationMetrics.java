@@ -33,7 +33,7 @@ public class EvaluationMetrics {
     // 分布数据
     private Map<String, Integer> formatDistribution;
     private Map<Integer, Integer> ratingDistribution;
-    private List<String> popularPrompts;
+    private List<PopularPrompt> popularPrompts;
 
     // 构造函数
     public EvaluationMetrics() {
@@ -42,6 +42,46 @@ public class EvaluationMetrics {
     public EvaluationMetrics(LocalDate startDate, LocalDate endDate) {
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+
+    // 内部类：热门提示词
+    public static class PopularPrompt {
+        private String text;
+        private Integer count;
+        private BigDecimal successRate;
+
+        public PopularPrompt() {
+        }
+
+        public PopularPrompt(String text, Integer count, BigDecimal successRate) {
+            this.text = text;
+            this.count = count;
+            this.successRate = successRate;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+
+        public Integer getCount() {
+            return count;
+        }
+
+        public void setCount(Integer count) {
+            this.count = count;
+        }
+
+        public BigDecimal getSuccessRate() {
+            return successRate;
+        }
+
+        public void setSuccessRate(BigDecimal successRate) {
+            this.successRate = successRate;
+        }
     }
 
     // 内部类：日度指标
@@ -224,11 +264,11 @@ public class EvaluationMetrics {
         this.ratingDistribution = ratingDistribution;
     }
 
-    public List<String> getPopularPrompts() {
+    public List<PopularPrompt> getPopularPrompts() {
         return popularPrompts;
     }
 
-    public void setPopularPrompts(List<String> popularPrompts) {
+    public void setPopularPrompts(List<PopularPrompt> popularPrompts) {
         this.popularPrompts = popularPrompts;
     }
 
