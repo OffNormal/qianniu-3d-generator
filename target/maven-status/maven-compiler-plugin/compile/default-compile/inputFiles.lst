@@ -1,3 +1,4 @@
+D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\dto\Model3DHistoryDTO.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\dto\QueryHunyuanTo3DJobRequest.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\repository\ModelTaskRepository.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\service\ModelGenerationService.java
@@ -7,6 +8,7 @@ D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\repositor
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\service\impl\CacheHealthServiceImpl.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\controller\TestController.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\service\impl\SimilarityServiceImpl.java
+D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\service\Model3DHistoryService.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\service\TencentAi3dClient.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\controller\AdminDashboardController.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\config\WebMvcConfig.java
@@ -30,6 +32,7 @@ D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\controlle
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\service\CacheService.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\Application.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\entity\ModelPreviewImage.java
+D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\repository\Model3DHistoryRepository.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\dto\ApiResponse.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\dto\QueryHunyuanTo3DJobResponse.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\service\impl\CacheWarmupServiceImpl.java
@@ -42,7 +45,9 @@ D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\tencentcloudapi\ai3d\v2
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\service\CacheSchedulerService.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\service\impl\MockAIModelServiceImpl.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\repository\SystemMetricsRepository.java
+D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\entity\Model3DHistory.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\repository\TaskEvaluationRepository.java
+D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\controller\Model3DHistoryController.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\dto\SubmitHunyuanTo3DJobResponse.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\dto\ViewImage.java
 D:\qiniuCloud\qiniu\qiniu-3d-generator\src\main\java\com\qiniu\model3d\dto\TaskEvaluationData.java

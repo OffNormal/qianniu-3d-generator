@@ -1,6 +1,7 @@
 package com.qiniu.model3d.entity;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,7 +14,9 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "system_metrics")
-public class SystemMetrics {
+public class SystemMetrics implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -60,6 +60,9 @@ public class ModelGenerationService {
     @Autowired
     private ModelPreviewImageService modelPreviewImageService;
 
+    @Autowired
+    private Model3DHistoryService model3DHistoryService;
+
     @Value("${app.file.upload-dir}")
     private String uploadDir;
 
@@ -372,6 +375,14 @@ public class ModelGenerationService {
             // 缓存任务结果
             cacheService.cacheTask(task);
             
+            // 保存到历史记录
+            try {
+                model3DHistoryService.saveModelToHistory(task);
+                logger.info("模型已保存到历史记录: {}", task.getTaskId());
+            } catch (Exception historyException) {
+                logger.warn("保存到历史记录失败: {}", task.getTaskId(), historyException);
+            }
+            
             logger.info("文本生成任务完成: {}", task.getTaskId());
             
         } catch (Exception e) {
@@ -455,6 +466,14 @@ public class ModelGenerationService {
             
             // 缓存任务结果
             cacheService.cacheTask(task);
+            
+            // 保存到历史记录
+            try {
+                model3DHistoryService.saveModelToHistory(task);
+                logger.info("模型已保存到历史记录: {}", task.getTaskId());
+            } catch (Exception historyException) {
+                logger.warn("保存到历史记录失败: {}", task.getTaskId(), historyException);
+            }
             
             logger.info("图片生成任务完成: {}", task.getTaskId());
             

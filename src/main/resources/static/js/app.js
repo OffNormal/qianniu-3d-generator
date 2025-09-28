@@ -876,16 +876,18 @@ async function loadHistoryData() {
         
         // 构建请求参数
         const params = new URLSearchParams({
-            page: currentHistoryPage, // 后端会自动转换为0开始的页码
-            size: historyPageSize
+            page: currentHistoryPage - 1, // 转换为0开始的页码
+            size: historyPageSize,
+            sortBy: 'createTime',
+            sortDir: 'desc'
         });
         
         if (currentHistoryStatus !== 'all') {
             params.append('status', currentHistoryStatus.toUpperCase());
         }
         
-        // 发送请求
-        const response = await fetch(`/api/v1/models/history?${params}`);
+        // 发送请求到新的API接口
+        const response = await fetch(`/api/history/list?${params}`);
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -894,12 +896,12 @@ async function loadHistoryData() {
         const result = await response.json();
         
         // 检查响应格式
-        if (result.code !== 200) {
+        if (!result.success) {
             throw new Error(result.message || '请求失败');
         }
         
         // 显示历史记录
-        displayHistoryData(result.data);
+        displayHistoryData(result);
         
     } catch (error) {
         console.error('加载历史记录失败:', error);
@@ -911,11 +913,11 @@ async function loadHistoryData() {
 }
 
 // 显示历史记录数据
-function displayHistoryData(data) {
-    // 修复：使用后端实际返回的数据结构
-    const { items, totalPages, page: currentPage, total: totalElements } = data;
+function displayHistoryData(result) {
+    // 使用新的API响应格式
+    const { data, totalPages, currentPage, totalElements } = result;
     
-    if (!items || items.length === 0) {
+    if (!data || data.length === 0) {
         showHistoryEmpty(true);
         if (elements.historyPagination) elements.historyPagination.style.display = 'none';
         return;
@@ -928,14 +930,14 @@ function displayHistoryData(data) {
     
     // 渲染历史记录项
     if (elements.historyList) {
-        items.forEach(item => {
+        data.forEach(item => {
             const historyItem = createHistoryItem(item);
             elements.historyList.appendChild(historyItem);
         });
     }
     
-    // 更新分页 - 注意currentPage已经是1开始的页码
-    updateHistoryPagination(totalPages, currentPage, totalElements);
+    // 更新分页 - currentPage是0开始的，需要转换为1开始
+    updateHistoryPagination(totalPages, currentPage + 1, totalElements);
 }
 
 // 将后端返回的相对路径转换为正确的URL格式
@@ -958,8 +960,7 @@ function createHistoryItem(item) {
     div.className = 'history-item';
     
     // 格式化时间
-    const createdAt = new Date(item.createdAt).toLocaleString('zh-CN');
-    const completedAt = item.completedAt ? new Date(item.completedAt).toLocaleString('zh-CN') : '-';
+    const createTime = new Date(item.createTime).toLocaleString('zh-CN');
     
     // 状态显示文本
     const statusText = {
@@ -969,24 +970,24 @@ function createHistoryItem(item) {
         'FAILED': '失败'
     }[item.status] || item.status;
     
-    // 转换预览图URL和模型URL为正确的Web路径
-    const previewUrl = convertToWebUrl(item.previewUrl);
-    const modelUrl = convertToWebUrl(item.modelUrl);
+    // 使用新的字段名
+    const previewUrl = item.previewUrl;
+    const downloadUrl = item.downloadUrl;
     
     div.innerHTML = `
         <div class="history-item-header">
-            <div class="history-item-id">任务ID: ${item.taskId}</div>
+            <div class="history-item-id">模型: ${item.modelName}</div>
             <div class="history-item-status">
                 <span class="status-badge ${item.status.toLowerCase()}">${statusText}</span>
             </div>
         </div>
         <div class="history-item-content">
-            ${item.status === 'COMPLETED' && previewUrl ? `
+            ${previewUrl ? `
             <div class="history-item-preview">
                 <img src="${previewUrl}" 
                      alt="模型预览图" 
                      class="history-preview-image"
-                     onclick="previewHistoryModel('${item.taskId}')"
+                     onclick="previewHistoryModel('${item.id}')"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                 <div class="preview-error" style="display: none;">
                     <i class="fas fa-image"></i>
@@ -996,42 +997,48 @@ function createHistoryItem(item) {
             ` : ''}
             <div class="history-item-info">
                 <div class="history-item-prompt">
-                    <strong>提示词:</strong> ${item.prompt || '无'}
+                    <strong>描述:</strong> ${item.description || item.inputText || '无'}
                 </div>
                 <div class="history-item-details">
                     <div class="history-detail">
                         <span class="detail-label">创建时间:</span>
-                        <span class="detail-value">${createdAt}</span>
+                        <span class="detail-value">${createTime}</span>
                     </div>
                     <div class="history-detail">
-                        <span class="detail-label">完成时间:</span>
-                        <span class="detail-value">${completedAt}</span>
+                        <span class="detail-label">文件大小:</span>
+                        <span class="detail-value">${formatFileSize(item.fileSize)}</span>
                     </div>
-                    ${item.duration ? `
+                    ${item.modelFormat ? `
                     <div class="history-detail">
-                        <span class="detail-label">耗时:</span>
-                        <span class="detail-value">${formatTime(item.duration)}</span>
+                        <span class="detail-label">格式:</span>
+                        <span class="detail-value">${item.modelFormat}</span>
                     </div>
                     ` : ''}
-                    ${item.errorMessage ? `
-                    <div class="history-detail error">
-                        <span class="detail-label">错误信息:</span>
-                        <span class="detail-value">${item.errorMessage}</span>
+                    ${item.generationTimeSeconds ? `
+                    <div class="history-detail">
+                        <span class="detail-label">生成耗时:</span>
+                        <span class="detail-value">${formatTime(item.generationTimeSeconds)}</span>
+                    </div>
+                    ` : ''}
+                    ${item.downloadCount > 0 ? `
+                    <div class="history-detail">
+                        <span class="detail-label">下载次数:</span>
+                        <span class="detail-value">${item.downloadCount}</span>
                     </div>
                     ` : ''}
                 </div>
             </div>
         </div>
-        ${item.status === 'COMPLETED' && (modelUrl || previewUrl) ? `
+        ${downloadUrl || previewUrl ? `
         <div class="history-item-actions">
             ${previewUrl ? `
-            <button class="btn btn-secondary" onclick="previewHistoryModel('${item.taskId}')">
+            <button class="btn btn-secondary" onclick="previewHistoryModel('${item.id}')">
                 <i class="fas fa-eye"></i>
                 预览模型
             </button>
             ` : ''}
-            ${modelUrl ? `
-            <button class="btn btn-primary" onclick="downloadHistoryModel('${modelUrl}', '${item.taskId}')">
+            ${downloadUrl ? `
+            <button class="btn btn-primary" onclick="downloadHistoryModel('${downloadUrl}', '${item.id}')">
                 <i class="fas fa-download"></i>
                 下载模型
             </button>
@@ -1090,29 +1097,13 @@ function showHistoryEmpty(show) {
 }
 
 // 预览历史记录中的模型
-async function previewHistoryModel(taskId) {
+async function previewHistoryModel(historyId) {
     try {
         showLoading(true);
         
-        // 首先尝试获取任务状态，检查是否有多张预览图片
-        const statusResponse = await fetch(`/api/v1/models/status/${taskId}`);
-        if (statusResponse.ok) {
-            const statusData = await statusResponse.json();
-            
-            // 检查是否有多张预览图片
-            if (statusData.result && statusData.result.previewImages && statusData.result.previewImages.length > 1) {
-                // 显示轮播
-                showPreviewCarousel(statusData.result.previewImages);
-            } else {
-                // 显示单张图片（兼容旧版本）
-                const previewUrl = `/api/v1/ai3d/preview/${taskId}?size=medium`;
-                showSinglePreview(previewUrl);
-            }
-        } else {
-            // 如果获取状态失败，回退到单张图片模式
-            const previewUrl = `/api/v1/ai3d/preview/${taskId}?size=medium`;
-            showSinglePreview(previewUrl);
-        }
+        // 使用新的API获取预览图
+        const previewUrl = `/api/history/preview/${historyId}`;
+        showSinglePreview(previewUrl);
         
         if (elements.previewModal) elements.previewModal.style.display = 'flex';
         
@@ -1125,14 +1116,20 @@ async function previewHistoryModel(taskId) {
 }
 
 // 下载历史记录中的模型
-function downloadHistoryModel(modelUrl, taskId) {
-    const link = document.createElement('a');
-    link.href = modelUrl;
-    link.download = `3d-model-${taskId}.zip`;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+function downloadHistoryModel(downloadUrl, historyId) {
+    if (downloadUrl) {
+        // 如果已经有完整的下载URL，直接使用
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `3d-model-${historyId}.zip`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } else {
+        // 如果没有下载URL，使用API下载
+        window.open(`/api/history/download/${historyId}`, '_blank');
+    }
 }
 
 // ==================== 管理员仪表板功能 ====================
@@ -1526,3 +1523,4 @@ function initHealthStatusModal() {
         }
     });
 }
+ 

@@ -1,9 +1,9 @@
 -- 添加缓存相关字段到 model_tasks 表
 ALTER TABLE model_tasks ADD reference_count INT DEFAULT 1;
-ALTER TABLE model_tasks ADD last_accessed DATETIME2 NULL;
+ALTER TABLE model_tasks ADD last_accessed TIMESTAMP NULL;
 ALTER TABLE model_tasks ADD access_count INT DEFAULT 1;
-ALTER TABLE model_tasks ADD file_signature NVARCHAR(64) NULL;
-ALTER TABLE model_tasks ADD input_hash NVARCHAR(64) NULL;
+ALTER TABLE model_tasks ADD file_signature VARCHAR(64) NULL;
+ALTER TABLE model_tasks ADD input_hash VARCHAR(64) NULL;
 
 -- 为现有记录设置默认值
 UPDATE model_tasks 
@@ -23,14 +23,14 @@ CREATE INDEX idx_reference_count ON model_tasks(reference_count);
 -- 创建缓存专用表
 CREATE TABLE model_cache_metadata (
     id BIGINT IDENTITY(1,1) PRIMARY KEY,
-    task_id NVARCHAR(50) NOT NULL,
-    input_hash NVARCHAR(64) NOT NULL,
-    file_signature NVARCHAR(64) NULL,
+    task_id VARCHAR(50) NOT NULL,
+    input_hash VARCHAR(64) NOT NULL,
+    file_signature VARCHAR(64) NULL,
     reference_count INT DEFAULT 1,
-    last_accessed DATETIME2 NULL,
+    last_accessed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     access_count INT DEFAULT 1,
-    created_at DATETIME2 NULL,
-    updated_at DATETIME2 NULL
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 为 model_cache_metadata 表添加索引
@@ -39,8 +39,3 @@ CREATE INDEX idx_input_hash_cache ON model_cache_metadata(input_hash);
 CREATE INDEX idx_last_accessed_cache ON model_cache_metadata(last_accessed);
 CREATE INDEX idx_access_count_cache ON model_cache_metadata(access_count);
 CREATE INDEX idx_file_signature_cache ON model_cache_metadata(file_signature);
-
--- 添加默认值约束
-ALTER TABLE model_cache_metadata ADD CONSTRAINT DF_model_cache_metadata_created_at DEFAULT GETDATE() FOR created_at;
-ALTER TABLE model_cache_metadata ADD CONSTRAINT DF_model_cache_metadata_updated_at DEFAULT GETDATE() FOR updated_at;
-ALTER TABLE model_cache_metadata ADD CONSTRAINT DF_model_cache_metadata_last_accessed DEFAULT GETDATE() FOR last_accessed;

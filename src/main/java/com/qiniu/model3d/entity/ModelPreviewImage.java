@@ -1,6 +1,7 @@
 package com.qiniu.model3d.entity;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -9,7 +10,9 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "model_preview_images")
-public class ModelPreviewImage {
+public class ModelPreviewImage implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
