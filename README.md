@@ -16,9 +16,13 @@
 - **实时预览** - 在线3D模型预览和交互
 
 ### 🛠️ 辅助功能
-- **任务管理** - 异步任务处理，支持任务状态查询
-- **文件下载** - 支持生成模型的批量下载
-- **参数配置** - 可调节模型复杂度、格式等参数
+- **任务管理** - 异步任务处理，支持任务状态查询和历史记录
+- **文件下载** - 支持生成模型的下载和预览图片
+- **参数配置** - 可调节模型复杂度、格式、艺术风格等参数
+- **缓存系统** - 智能缓存机制，提升相似请求的响应速度
+- **管理面板** - 系统监控、性能分析和用户行为统计
+- **定时清理** - 自动清理过期文件和任务记录
+- **多环境支持** - 开发、测试、生产环境配置分离
 - **API接口** - 完整的RESTful API支持
 
 ## 🏗️ 技术栈
@@ -138,6 +142,27 @@ GET /api/v1/ai3d/query/{jobId}
 GET /api/v1/ai3d/download/{jobId}?format=obj
 ```
 
+#### 5. 历史记录管理
+```http
+# 获取历史记录列表
+GET /api/v1/models/history?page=0&size=10&status=COMPLETED
+
+# 获取任务详情
+GET /api/v1/models/status/{taskId}
+
+# 删除历史记录
+DELETE /api/v1/models/history/{id}
+```
+
+#### 6. 管理面板接口
+```http
+# 获取系统统计信息
+GET /api/v1/admin/stats
+
+# 获取缓存状态
+GET /api/v1/admin/cache/status
+```
+
 更多API详情请参考：[API文档](docs/api-documentation.md)
 
 ## 🎮 使用示例
@@ -167,26 +192,50 @@ curl -X POST http://localhost:8081/api/v1/ai3d/submit/image-url \
 
 ```
 qiniu-3d-generator/
-├── docs/                          # 项目文档
-│   ├── api-documentation.md       # API接口文档
-│   ├── product-requirements.md    # 产品需求文档
-│   └── product-prototype.svg      # 产品原型图
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/qiniu/model3d/
-│   │   │       ├── controller/    # 控制器层
-│   │   │       ├── service/       # 服务层
-│   │   │       ├── dto/          # 数据传输对象
-│   │   │       └── config/       # 配置类
-│   │   └── resources/
-│   │       ├── application.yml    # 应用配置
-│   │       └── static/           # 静态资源
-│   └── test/                     # 测试代码
-├── uploads/                      # 文件上传目录
-├── logs/                        # 日志文件
-├── pom.xml                      # Maven配置
-└── README.md                    # 项目说明
+├── docs/                                    # 项目文档
+│   ├── api-documentation.md                # API接口文档
+│   ├── product-requirements.md             # 产品需求文档
+│   └── product-prototype.svg               # 产品原型图
+├── src/main/java/com/qiniu/model3d/
+│   ├── Application.java                    # Spring Boot 启动类
+│   ├── config/                             # 配置类
+│   │   ├── TencentCloudConfig.java         # 腾讯云服务配置
+│   │   └── WebMvcConfig.java               # Web MVC 配置
+│   ├── controller/                         # 控制器层
+│   │   ├── ModelGenerationController.java  # 模型生成控制器
+│   │   ├── Model3DHistoryController.java   # 历史记录控制器
+│   │   ├── AdminDashboardController.java   # 管理面板控制器
+│   │   └── FileUploadController.java       # 文件上传控制器
+│   ├── service/                            # 服务层
+│   │   ├── ModelGenerationService.java     # 模型生成服务
+│   │   ├── CacheService.java               # 缓存服务
+│   │   ├── TencentAi3dClient.java          # 腾讯云AI3D客户端
+│   │   └── impl/                           # 服务实现类
+│   ├── entity/                             # 实体类
+│   │   ├── Model3DHistory.java             # 历史记录实体
+│   │   └── GenerationTask.java             # 生成任务实体
+│   ├── repository/                         # 数据访问层
+│   │   ├── Model3DHistoryRepository.java   # 历史记录仓库
+│   │   └── GenerationTaskRepository.java   # 任务仓库
+│   ├── dto/                                # 数据传输对象
+│   │   ├── GenerationRequest.java          # 生成请求DTO
+│   │   └── GenerationResponse.java         # 生成响应DTO
+│   └── scheduler/                          # 定时任务
+│       └── TaskCleanupScheduler.java       # 任务清理调度器
+├── src/main/resources/
+│   ├── application.yml                     # 应用配置文件
+│   └── static/                             # 静态资源
+│       ├── index.html                      # 主页面
+│       ├── admin/dashboard.html            # 管理面板
+│       ├── css/style.css                   # 样式文件
+│       └── js/app.js                       # 前端逻辑
+├── src/test/                               # 测试代码
+├── models/                                 # 生成的3D模型文件
+├── previews/                               # 模型预览图片
+├── uploads/                                # 用户上传文件
+├── logs/                                   # 应用日志文件
+├── pom.xml                                 # Maven项目配置
+└── README.md                               # 项目说明文档
 ```
 
 ## 🔧 配置说明
@@ -203,17 +252,61 @@ spring:
     url: jdbc:mysql://localhost:3306/qiniu_3d_generator
     username: root
     password: your_password
+    hikari:                      # 连接池配置
+      maximum-pool-size: 20
+      minimum-idle: 5
   
   servlet:
     multipart:                   # 文件上传配置
       max-file-size: 10MB
       max-request-size: 10MB
+  
+  jpa:                          # JPA配置
+    hibernate:
+      ddl-auto: update          # 开发环境使用update，生产环境使用validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
 
-tencent:                         # 腾讯云配置
+# 应用自定义配置
+app:
+  file:
+    upload-dir: ./uploads        # 上传文件目录
+    model-dir: ./models         # 模型文件目录
+    preview-dir: ./previews     # 预览图目录
+    max-file-size: 10485760     # 最大文件大小(字节)
+  
+  model:
+    max-text-length: 500        # 最大文本长度
+    daily-generation-limit: 20  # 每日生成限制
+    generation-timeout: 600     # 生成超时时间(秒)
+
+# 腾讯云配置
+tencent:
   cloud:
-    secret-id: your_secret_id
-    secret-key: your_secret_key
-    region: ap-beijing
+    secret-id: ${TENCENT_SECRET_ID:your_secret_id}
+    secret-key: ${TENCENT_SECRET_KEY:your_secret_key}
+    region: ap-guangzhou
+    ai3d:
+      endpoint: hunyuan.tencentcloudapi.com
+      version: "2023-09-01"
+      timeout: 60000
+      retry-count: 3
+      generation:
+        complexity: medium       # 生成复杂度: simple/medium/complex
+        format: jpg             # 预览格式
+        style: "201"            # 艺术风格
+
+# 日志配置
+logging:
+  level:
+    com.qiniu.model3d: INFO
+    org.springframework.web: DEBUG
+  file:
+    name: logs/qiniu-3d-generator.log
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 ```
 
 ### 环境配置
