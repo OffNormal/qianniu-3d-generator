@@ -886,8 +886,8 @@ async function loadHistoryData() {
             params.append('status', currentHistoryStatus.toUpperCase());
         }
         
-        // 发送请求到新的API接口
-        const response = await fetch(`/api/history/list?${params}`);
+        // 发送请求到正确的API接口
+        const response = await fetch(`/api/v1/models/history?${params}`);
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -896,7 +896,7 @@ async function loadHistoryData() {
         const result = await response.json();
         
         // 检查响应格式
-        if (!result.success) {
+        if (result.code !== 200) {
             throw new Error(result.message || '请求失败');
         }
         
@@ -914,10 +914,10 @@ async function loadHistoryData() {
 
 // 显示历史记录数据
 function displayHistoryData(result) {
-    // 使用新的API响应格式
-    const { data, totalPages, currentPage, totalElements } = result;
+    // 使用正确的API响应格式 - result.data包含分页信息和items数组
+    const { items, totalPages, page, total } = result.data;
     
-    if (!data || data.length === 0) {
+    if (!items || items.length === 0) {
         showHistoryEmpty(true);
         if (elements.historyPagination) elements.historyPagination.style.display = 'none';
         return;
@@ -930,14 +930,14 @@ function displayHistoryData(result) {
     
     // 渲染历史记录项
     if (elements.historyList) {
-        data.forEach(item => {
+        items.forEach(item => {
             const historyItem = createHistoryItem(item);
             elements.historyList.appendChild(historyItem);
         });
     }
     
-    // 更新分页 - currentPage是0开始的，需要转换为1开始
-    updateHistoryPagination(totalPages, currentPage + 1, totalElements);
+    // 更新分页 - page是1开始的，直接使用
+    updateHistoryPagination(totalPages, page, total);
 }
 
 // 将后端返回的相对路径转换为正确的URL格式
@@ -959,8 +959,8 @@ function createHistoryItem(item) {
     const div = document.createElement('div');
     div.className = 'history-item';
     
-    // 格式化时间
-    const createTime = new Date(item.createTime).toLocaleString('zh-CN');
+    // 格式化时间 - 使用正确的字段名
+    const createTime = new Date(item.createdAt).toLocaleString('zh-CN');
     
     // 状态显示文本
     const statusText = {
@@ -970,13 +970,13 @@ function createHistoryItem(item) {
         'FAILED': '失败'
     }[item.status] || item.status;
     
-    // 使用新的字段名
-    const previewUrl = item.previewUrl;
-    const downloadUrl = item.downloadUrl;
+    // 修复字段名匹配问题并转换URL路径
+    const previewUrl = item.previewUrl ? convertToWebUrl(item.previewUrl) : '';
+    const downloadUrl = item.modelUrl ? convertToWebUrl(item.modelUrl) : '';
     
     div.innerHTML = `
         <div class="history-item-header">
-            <div class="history-item-id">模型: ${item.modelName}</div>
+            <div class="history-item-id">任务: ${item.taskId}</div>
             <div class="history-item-status">
                 <span class="status-badge ${item.status.toLowerCase()}">${statusText}</span>
             </div>
@@ -987,7 +987,7 @@ function createHistoryItem(item) {
                 <img src="${previewUrl}" 
                      alt="模型预览图" 
                      class="history-preview-image"
-                     onclick="previewHistoryModel('${item.id}')"
+                     onclick="previewHistoryModel('${item.taskId}')"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                 <div class="preview-error" style="display: none;">
                     <i class="fas fa-image"></i>
@@ -997,33 +997,29 @@ function createHistoryItem(item) {
             ` : ''}
             <div class="history-item-info">
                 <div class="history-item-prompt">
-                    <strong>描述:</strong> ${item.description || item.inputText || '无'}
+                    <strong>描述:</strong> ${item.prompt || '无'}
                 </div>
                 <div class="history-item-details">
                     <div class="history-detail">
                         <span class="detail-label">创建时间:</span>
                         <span class="detail-value">${createTime}</span>
                     </div>
+                    ${item.completedAt ? `
                     <div class="history-detail">
-                        <span class="detail-label">文件大小:</span>
-                        <span class="detail-value">${formatFileSize(item.fileSize)}</span>
-                    </div>
-                    ${item.modelFormat ? `
-                    <div class="history-detail">
-                        <span class="detail-label">格式:</span>
-                        <span class="detail-value">${item.modelFormat}</span>
+                        <span class="detail-label">完成时间:</span>
+                        <span class="detail-value">${new Date(item.completedAt).toLocaleString('zh-CN')}</span>
                     </div>
                     ` : ''}
-                    ${item.generationTimeSeconds ? `
+                    ${item.duration ? `
                     <div class="history-detail">
                         <span class="detail-label">生成耗时:</span>
-                        <span class="detail-value">${formatTime(item.generationTimeSeconds)}</span>
+                        <span class="detail-value">${formatTime(item.duration)}</span>
                     </div>
                     ` : ''}
-                    ${item.downloadCount > 0 ? `
+                    ${item.errorMessage ? `
                     <div class="history-detail">
-                        <span class="detail-label">下载次数:</span>
-                        <span class="detail-value">${item.downloadCount}</span>
+                        <span class="detail-label">错误信息:</span>
+                        <span class="detail-value error-message">${item.errorMessage}</span>
                     </div>
                     ` : ''}
                 </div>
@@ -1032,13 +1028,13 @@ function createHistoryItem(item) {
         ${downloadUrl || previewUrl ? `
         <div class="history-item-actions">
             ${previewUrl ? `
-            <button class="btn btn-secondary" onclick="previewHistoryModel('${item.id}')">
+            <button class="btn btn-secondary" onclick="previewHistoryModel('${item.taskId}')">
                 <i class="fas fa-eye"></i>
                 预览模型
             </button>
             ` : ''}
             ${downloadUrl ? `
-            <button class="btn btn-primary" onclick="downloadHistoryModel('${downloadUrl}', '${item.id}')">
+            <button class="btn btn-primary" onclick="downloadHistoryModel('${downloadUrl}', '${item.taskId}')">
                 <i class="fas fa-download"></i>
                 下载模型
             </button>
