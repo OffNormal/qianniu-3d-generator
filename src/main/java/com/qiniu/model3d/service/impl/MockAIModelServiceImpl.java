@@ -97,6 +97,34 @@ public class MockAIModelServiceImpl implements AIModelService {
     }
 
     @Override
+    public java.util.List<String> generateMultiplePreviewImages(String modelPath, int count) throws Exception {
+        logger.info("生成多张模型预览图: {}, 数量: {}", modelPath, count);
+        
+        java.util.List<String> previewPaths = new java.util.ArrayList<>();
+        
+        // 创建预览目录
+        Path previewDirPath = Paths.get(previewDir);
+        if (!Files.exists(previewDirPath)) {
+            Files.createDirectories(previewDirPath);
+        }
+        
+        for (int i = 0; i < count; i++) {
+            // 生成预览图文件名，包含序号
+            String filename = "preview_" + UUID.randomUUID().toString() + "_" + (i + 1) + ".png";
+            Path previewPath = previewDirPath.resolve(filename);
+            
+            // 创建模拟预览图（简单的PNG文件头，每张图片稍有不同）
+            byte[] mockPngData = createMockPngData(i);
+            Files.write(previewPath, mockPngData);
+            
+            previewPaths.add(previewPath.toString());
+            logger.info("模型预览图生成完成 {}/{}: {}", i + 1, count, previewPath.toString());
+        }
+        
+        return previewPaths;
+    }
+
+    @Override
     public boolean isServiceAvailable() {
         // 模拟服务检查
         return true;
@@ -262,7 +290,15 @@ public class MockAIModelServiceImpl implements AIModelService {
      * 创建模拟PNG数据
      */
     private byte[] createMockPngData() {
-        // 简单的PNG文件头和最小数据
+        return createMockPngData(0);
+    }
+
+    /**
+     * 生成模拟PNG数据，根据索引生成不同的图片
+     */
+    private byte[] createMockPngData(int index) {
+        // 简单的PNG文件头和最小数据，根据索引稍作变化
+        byte variation = (byte) (index % 256);
         return new byte[] {
             (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
             0x00, 0x00, 0x00, 0x0D, // IHDR chunk length
@@ -273,7 +309,7 @@ public class MockAIModelServiceImpl implements AIModelService {
             (byte) 0x90, (byte) 0x77, (byte) 0x53, (byte) 0xDE, // CRC
             0x00, 0x00, 0x00, 0x0C, // IDAT chunk length
             0x49, 0x44, 0x41, 0x54, // IDAT
-            0x08, (byte) 0x99, 0x01, 0x01, 0x00, 0x00, 0x00, (byte) 0xFF, (byte) 0xFF, 0x00, 0x00, 0x00, // data
+            0x08, (byte) 0x99, 0x01, 0x01, 0x00, 0x00, 0x00, (byte) (0xFF - variation), (byte) 0xFF, variation, 0x00, 0x00, // data with variation
             0x00, 0x00, 0x00, 0x00, // IEND chunk length
             0x49, 0x45, 0x4E, 0x44, // IEND
             (byte) 0xAE, 0x42, 0x60, (byte) 0x82 // CRC

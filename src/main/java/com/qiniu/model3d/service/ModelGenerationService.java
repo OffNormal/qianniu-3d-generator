@@ -2,6 +2,7 @@ package com.qiniu.model3d.service;
 
 import com.qiniu.model3d.dto.CacheResult;
 import com.qiniu.model3d.dto.TextGenerationRequest;
+import com.qiniu.model3d.dto.TaskEvaluationData;
 import com.qiniu.model3d.entity.ModelTask;
 import com.qiniu.model3d.repository.ModelTaskRepository;
 import org.slf4j.Logger;
@@ -52,6 +53,12 @@ public class ModelGenerationService {
 
     @Autowired
     private CacheMetricsService cacheMetricsService;
+
+    @Autowired
+    private EvaluationService evaluationService;
+
+    @Autowired
+    private ModelPreviewImageService modelPreviewImageService;
 
     @Value("${app.file.upload-dir}")
     private String uploadDir;
@@ -325,8 +332,21 @@ public class ModelGenerationService {
                 (progress) -> updateTaskProgress(task.getTaskId(), progress)
             );
             
-            // 生成预览图
-            String previewPath = aiModelService.generatePreviewImage(modelPath);
+            // 生成多张预览图
+            List<String> previewPaths = selectedService.generateMultiplePreviewImages(modelPath, 3);
+            
+            // 保存预览图片到数据库
+            for (int i = 0; i < previewPaths.size(); i++) {
+                modelPreviewImageService.savePreviewImage(
+                    task.getTaskId(), 
+                    previewPaths.get(i), 
+                    "MAIN", 
+                    i + 1
+                );
+            }
+            
+            // 为了兼容性，设置第一张预览图为主预览图
+            String mainPreviewPath = previewPaths.isEmpty() ? null : previewPaths.get(0);
             
             // 计算文件签名
             String fileSignature = cacheService.calculateFileSignature(modelPath);
@@ -335,11 +355,19 @@ public class ModelGenerationService {
             task.setStatus(ModelTask.TaskStatus.COMPLETED);
             task.setProgress(100);
             task.setModelFilePath(modelPath);
-            task.setPreviewImagePath(previewPath);
+            task.setPreviewImagePath(mainPreviewPath);
             task.setFileSignature(fileSignature);
             task.setCompletedAt(LocalDateTime.now());
             task.setUpdatedAt(LocalDateTime.now());
             modelTaskRepository.save(task);
+            
+            // 更新TaskEvaluation状态为成功
+            try {
+                evaluationService.updateTaskStatus(task.getTaskId(), "SUCCESS", 
+                    task.getCompletedAt(), null);
+            } catch (Exception evalException) {
+                logger.warn("更新TaskEvaluation状态失败: {}", task.getTaskId(), evalException);
+            }
             
             // 缓存任务结果
             cacheService.cacheTask(task);
@@ -353,6 +381,14 @@ public class ModelGenerationService {
             task.setErrorMessage(e.getMessage());
             task.setUpdatedAt(LocalDateTime.now());
             modelTaskRepository.save(task);
+            
+            // 更新TaskEvaluation状态为失败
+            try {
+                evaluationService.updateTaskStatus(task.getTaskId(), "FAILED", 
+                    LocalDateTime.now(), e.getMessage());
+            } catch (Exception evalException) {
+                logger.warn("更新TaskEvaluation状态失败: {}", task.getTaskId(), evalException);
+            }
         }
     }
 
@@ -380,8 +416,21 @@ public class ModelGenerationService {
                 (progress) -> updateTaskProgress(task.getTaskId(), progress)
             );
             
-            // 生成预览图
-            String previewPath = aiModelService.generatePreviewImage(modelPath);
+            // 生成多张预览图
+            List<String> previewPaths = selectedService.generateMultiplePreviewImages(modelPath, 3);
+            
+            // 保存预览图片到数据库
+            for (int i = 0; i < previewPaths.size(); i++) {
+                modelPreviewImageService.savePreviewImage(
+                    task.getTaskId(), 
+                    previewPaths.get(i), 
+                    "MAIN", 
+                    i + 1
+                );
+            }
+            
+            // 为了兼容性，设置第一张预览图为主预览图
+            String mainPreviewPath = previewPaths.isEmpty() ? null : previewPaths.get(0);
             
             // 计算文件签名
             String fileSignature = cacheService.calculateFileSignature(modelPath);
@@ -390,11 +439,19 @@ public class ModelGenerationService {
             task.setStatus(ModelTask.TaskStatus.COMPLETED);
             task.setProgress(100);
             task.setModelFilePath(modelPath);
-            task.setPreviewImagePath(previewPath);
+            task.setPreviewImagePath(mainPreviewPath);
             task.setFileSignature(fileSignature);
             task.setCompletedAt(LocalDateTime.now());
             task.setUpdatedAt(LocalDateTime.now());
             modelTaskRepository.save(task);
+            
+            // 更新TaskEvaluation状态为成功
+            try {
+                evaluationService.updateTaskStatus(task.getTaskId(), "SUCCESS", 
+                    task.getCompletedAt(), null);
+            } catch (Exception evalException) {
+                logger.warn("更新TaskEvaluation状态失败: {}", task.getTaskId(), evalException);
+            }
             
             // 缓存任务结果
             cacheService.cacheTask(task);
@@ -408,6 +465,14 @@ public class ModelGenerationService {
             task.setErrorMessage(e.getMessage());
             task.setUpdatedAt(LocalDateTime.now());
             modelTaskRepository.save(task);
+            
+            // 更新TaskEvaluation状态为失败
+            try {
+                evaluationService.updateTaskStatus(task.getTaskId(), "FAILED", 
+                    LocalDateTime.now(), e.getMessage());
+            } catch (Exception evalException) {
+                logger.warn("更新TaskEvaluation状态失败: {}", task.getTaskId(), evalException);
+            }
         }
     }
 
@@ -586,7 +651,19 @@ public class ModelGenerationService {
                                                           request.getFormat() != null ? request.getFormat().toString() : null));
         
         // 保存任务
-        return modelTaskRepository.save(task);
+        ModelTask savedTask = modelTaskRepository.save(task);
+        
+        // 创建对应的TaskEvaluation记录
+        TaskEvaluationData evaluationData = new TaskEvaluationData();
+        evaluationData.setPrompt(request.getText());
+        evaluationData.setResultFormat(request.getFormat() != null ? request.getFormat().toString() : null);
+        evaluationData.setStatus("PENDING");
+        evaluationData.setClientIp(clientIp);
+        evaluationData.setSubmitTime(LocalDateTime.now());
+        
+        evaluationService.recordTaskEvaluation(savedTask.getTaskId(), evaluationData);
+        
+        return savedTask;
     }
 
     /**
@@ -713,7 +790,24 @@ public class ModelGenerationService {
                                                           format != null ? format.toString() : null));
         
         // 保存任务
-        return modelTaskRepository.save(task);
+        task = modelTaskRepository.save(task);
+        
+        // 创建TaskEvaluation记录
+        try {
+            TaskEvaluationData evaluationData = new TaskEvaluationData();
+            evaluationData.setJobId(task.getTaskId());
+            evaluationData.setPrompt(description != null ? description : "图片生成任务");
+            evaluationData.setResultFormat(format != null ? format.toString() : "OBJ");
+            evaluationData.setStatus("PENDING");
+            evaluationData.setClientIp(clientIp);
+            evaluationData.setSubmitTime(task.getCreatedAt());
+            
+            evaluationService.recordTaskEvaluation(task.getTaskId(), evaluationData);
+        } catch (Exception e) {
+            logger.warn("创建TaskEvaluation记录失败: {}", task.getTaskId(), e);
+        }
+        
+        return task;
     }
 
     /**
@@ -734,5 +828,26 @@ public class ModelGenerationService {
             logger.error("计算文件哈希失败: {}", filePath, e);
             return filePath; // 降级处理
         }
+    }
+
+    /**
+     * 获取模型预览图片路径
+     */
+    public String getModelPreviewPath(String modelId) {
+        ModelTask task = modelTaskRepository.findByTaskId(modelId).orElse(null);
+        return task != null ? task.getPreviewImagePath() : null;
+    }
+
+    /**
+     * 获取特定的模型预览图片路径
+     */
+    public String getSpecificModelPreviewPath(String modelId, Long imageId) {
+        ModelTask task = modelTaskRepository.findByTaskId(modelId).orElse(null);
+        if (task == null) {
+            return null;
+        }
+
+        // 通过ModelPreviewImageService查找特定的预览图片
+        return modelPreviewImageService.getPreviewImagePath(task.getTaskId(), imageId);
     }
 }

@@ -3,8 +3,11 @@ package com.qiniu.model3d.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.qiniu.model3d.entity.ModelTask;
+import com.qiniu.model3d.entity.ModelPreviewImage;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 任务状态响应DTO
@@ -44,6 +47,19 @@ public class TaskStatusResponse {
             this.result.setModelId(task.getModelId());
             this.result.setDownloadUrl("/api/v1/models/download/" + task.getModelId());
             this.result.setPreviewUrl("/api/v1/models/preview/" + task.getModelId());
+            
+            // 设置多张预览图片信息
+            if (task.getPreviewImages() != null && !task.getPreviewImages().isEmpty()) {
+                List<PreviewImageInfo> previewImages = task.getPreviewImages().stream()
+                    .map(img -> new PreviewImageInfo(
+                        img.getId(),
+                        "/api/v1/models/preview/" + task.getModelId() + "/" + img.getId(),
+                        img.getImageOrder(),
+                        img.getCreatedAt()
+                    ))
+                    .collect(Collectors.toList());
+                this.result.setPreviewImages(previewImages);
+            }
             
             ModelInfo modelInfo = new ModelInfo();
             modelInfo.setVertices(task.getVerticesCount());
@@ -131,6 +147,7 @@ public class TaskStatusResponse {
         private String modelId;
         private String downloadUrl;
         private String previewUrl;
+        private List<PreviewImageInfo> previewImages;
         private ModelInfo modelInfo;
 
         // Getters and Setters
@@ -156,6 +173,14 @@ public class TaskStatusResponse {
 
         public void setPreviewUrl(String previewUrl) {
             this.previewUrl = previewUrl;
+        }
+
+        public List<PreviewImageInfo> getPreviewImages() {
+            return previewImages;
+        }
+
+        public void setPreviewImages(List<PreviewImageInfo> previewImages) {
+            this.previewImages = previewImages;
         }
 
         public ModelInfo getModelInfo() {
@@ -207,6 +232,60 @@ public class TaskStatusResponse {
 
         public void setFormat(String format) {
             this.format = format;
+        }
+    }
+
+    /**
+     * 预览图片信息内部类
+     */
+    public static class PreviewImageInfo {
+        private Long id;
+        private String url;
+        private Integer order;
+        
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+        private LocalDateTime createdAt;
+
+        public PreviewImageInfo() {}
+
+        public PreviewImageInfo(Long id, String url, Integer order, LocalDateTime createdAt) {
+            this.id = id;
+            this.url = url;
+            this.order = order;
+            this.createdAt = createdAt;
+        }
+
+        // Getters and Setters
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
+        public Integer getOrder() {
+            return order;
+        }
+
+        public void setOrder(Integer order) {
+            this.order = order;
+        }
+
+        public LocalDateTime getCreatedAt() {
+            return createdAt;
+        }
+
+        public void setCreatedAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
         }
     }
 }

@@ -107,6 +107,56 @@ public class EvaluationService {
      * 更新任务状态和完成信息
      * 
      * @param jobId 任务ID
+     * @param status 任务状态
+     * @param completeTime 完成时间
+     * @param errorMessage 错误信息
+     */
+    @Transactional
+    public void updateTaskStatus(String jobId, String status, LocalDateTime completeTime, String errorMessage) {
+        try {
+            Optional<TaskEvaluation> optionalEvaluation = taskEvaluationRepository.findByJobId(jobId);
+            if (optionalEvaluation.isPresent()) {
+                TaskEvaluation evaluation = optionalEvaluation.get();
+                
+                // 更新任务状态
+                if (status != null) {
+                    evaluation.setStatus(status);
+                }
+                
+                // 如果任务完成，记录完成时间和计算耗时
+                if (("SUCCESS".equals(status) || "DONE".equals(status)) && completeTime != null) {
+                    evaluation.setCompleteTime(completeTime);
+                    
+                    // 计算耗时（秒）
+                    if (evaluation.getSubmitTime() != null) {
+                        Duration duration = Duration.between(evaluation.getSubmitTime(), completeTime);
+                        evaluation.setDurationSeconds((int) duration.getSeconds());
+                    }
+                }
+                
+                // 如果任务失败，记录错误信息
+                if (("FAIL".equals(status) || "FAILED".equals(status)) && errorMessage != null) {
+                    evaluation.setErrorMessage(errorMessage);
+                    if (completeTime != null) {
+                        evaluation.setCompleteTime(completeTime);
+                    }
+                }
+                
+                evaluation.setUpdatedAt(LocalDateTime.now());
+                taskEvaluationRepository.save(evaluation);
+                logger.info("更新任务状态成功: jobId={}, status={}", jobId, status);
+            } else {
+                logger.warn("未找到任务评估记录: jobId={}", jobId);
+            }
+        } catch (Exception e) {
+            logger.error("更新任务状态失败: jobId={}", jobId, e);
+        }
+    }
+
+    /**
+     * 更新任务状态和完成信息
+     * 
+     * @param jobId 任务ID
      * @param response 查询响应
      */
     @Transactional
@@ -375,6 +425,7 @@ public class EvaluationService {
     private Map<String, Integer> getFormatDistribution(LocalDateTime startTime, LocalDateTime endTime) {
         List<Object[]> results = taskEvaluationRepository.getFormatDistributionByCreatedAtBetween(startTime, endTime);
         return results.stream()
+                .filter(row -> row[0] != null) // 过滤掉null键
                 .collect(Collectors.toMap(
                         row -> (String) row[0],
                         row -> ((Long) row[1]).intValue(),

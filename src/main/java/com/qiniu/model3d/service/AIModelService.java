@@ -51,6 +51,21 @@ public interface AIModelService {
     String generatePreviewImage(String modelPath) throws Exception;
 
     /**
+     * 生成多张模型预览图
+     * 
+     * @param modelPath 模型文件路径
+     * @param count 生成预览图的数量，默认为3张
+     * @return 预览图文件路径列表
+     */
+    default java.util.List<String> generateMultiplePreviewImages(String modelPath, int count) throws Exception {
+        java.util.List<String> previewPaths = new java.util.ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            previewPaths.add(generatePreviewImage(modelPath));
+        }
+        return previewPaths;
+    }
+
+    /**
      * 检查服务是否可用
      * 
      * @return 服务状态

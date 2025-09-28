@@ -432,7 +432,26 @@
                     </div>
                     <div class="modal-body">
                         <div class="preview-container" id="preview-container">
-                            <img id="model-preview-img" src="" alt="模型预览">
+                            <!-- 单张图片预览（兼容旧版本） -->
+                            <img id="model-preview-img" src="" alt="模型预览" style="display: none;">
+                            
+                            <!-- 多张图片轮播 -->
+                            <div class="preview-carousel" id="preview-carousel" style="display: none;">
+                                <div class="carousel-container">
+                                    <div class="carousel-track" id="carousel-track">
+                                        <!-- 预览图片将动态添加到这里 -->
+                                    </div>
+                                    <button class="carousel-btn carousel-prev" id="carousel-prev">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <button class="carousel-btn carousel-next" id="carousel-next">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                                <div class="carousel-indicators" id="carousel-indicators">
+                                    <!-- 指示器将动态添加到这里 -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

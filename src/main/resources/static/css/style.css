@@ -692,6 +692,96 @@ body {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
+/* 预览图片轮播样式 */
+.preview-carousel {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.carousel-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.3s ease;
+}
+
+.carousel-slide {
+    min-width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.carousel-slide img {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background 0.2s ease;
+    z-index: 10;
+}
+
+.carousel-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.carousel-prev {
+    left: 10px;
+}
+
+.carousel-next {
+    right: 10px;
+}
+
+.carousel-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.carousel-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ccc;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.carousel-indicator.active {
+    background: #667eea;
+}
+
+.carousel-indicator:hover {
+    background: #999;
+}
+
 .preview-controls {
     display: flex;
     gap: 1rem;
@@ -999,6 +1089,62 @@ body {
 
 .history-item-content {
     margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.history-item-preview {
+    flex-shrink: 0;
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.history-item-preview:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    transform: scale(1.02);
+}
+
+.history-preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.history-preview-image:hover {
+    transform: scale(1.05);
+}
+
+.preview-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #6c757d;
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 0.5rem;
+}
+
+.preview-error i {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.5;
+}
+
+.history-item-info {
+    flex: 1;
+    min-width: 0;
 }
 
 .history-item-prompt {
@@ -1006,6 +1152,7 @@ body {
     font-style: italic;
     margin-bottom: 0.5rem;
     line-height: 1.4;
+    word-wrap: break-word;
 }
 
 .history-item-meta {
@@ -1072,6 +1219,17 @@ body {
         gap: 0.5rem;
     }
     
+    .history-item-content {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .history-item-preview {
+        width: 100px;
+        height: 100px;
+        align-self: center;
+    }
+    
     .history-item-meta {
         grid-template-columns: 1fr;
     }
@@ -1083,6 +1241,18 @@ body {
     .history-pagination {
         flex-direction: column;
         gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .history-item-preview {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .history-item-actions .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 

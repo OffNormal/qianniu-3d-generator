@@ -9,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -242,6 +247,35 @@ public class ModelGenerationController {
         } catch (Exception e) {
             logger.error("获取模型预览图失败: modelId={}", modelId, e);
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 获取特定的模型预览图片
+     */
+    @GetMapping("/preview/{modelId}/{imageId}")
+    public ResponseEntity<Resource> getSpecificModelPreview(
+            @PathVariable String modelId, 
+            @PathVariable Long imageId) {
+        try {
+            String previewPath = modelGenerationService.getSpecificModelPreviewPath(modelId, imageId);
+            if (previewPath == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Path path = Paths.get(previewPath);
+            if (!Files.exists(path)) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Resource resource = new FileSystemResource(path);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_PNG)
+                    .body(resource);
+        } catch (Exception e) {
+            logger.error("获取特定模型预览图片失败: modelId={}, imageId={}, error={}", 
+                        modelId, imageId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

@@ -2,6 +2,7 @@ package com.qiniu.model3d.entity;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 3D模型生成任务实体类
@@ -114,6 +115,11 @@ public class ModelTask {
     
     @Column(name = "stl_file_path", length = 500)
     private String stlFilePath;
+
+    // 关联的预览图片列表
+    @OneToMany(mappedBy = "modelTask", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("imageOrder ASC")
+    private List<ModelPreviewImage> previewImages;
 
     // 构造函数
     public ModelTask() {
@@ -421,7 +427,15 @@ public class ModelTask {
      * 增加相似度使用计数
      */
     public void incrementSimilarityUsageCount() {
-        this.similarityUsageCount = (this.similarityUsageCount == null ? 0 : this.similarityUsageCount) + 1;
+        this.similarityUsageCount = (this.similarityUsageCount == null) ? 1 : this.similarityUsageCount + 1;
+    }
+
+    public List<ModelPreviewImage> getPreviewImages() {
+        return previewImages;
+    }
+
+    public void setPreviewImages(List<ModelPreviewImage> previewImages) {
+        this.previewImages = previewImages;
     }
 
     // 枚举类型定义

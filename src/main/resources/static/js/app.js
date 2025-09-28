@@ -60,63 +60,75 @@ window.navigateToTextGeneration = navigateToTextGeneration;
 window.navigateToImageGeneration = navigateToImageGeneration;
 window.backToHome = backToHome;
 
-// DOM 元素
-const elements = {
-    // 导航和标签页
-    navLinks: document.querySelectorAll('.nav-link'),
-    tabButtons: document.querySelectorAll('.tab-btn'),
-    tabContents: document.querySelectorAll('.tab-content'),
-    
-    // 表单
-    textForm: document.getElementById('text-form'),
-    imageForm: document.getElementById('image-form'),
-    
-    // 输入元素
-    textInput: document.getElementById('text-input'),
-    textCounter: document.getElementById('text-counter'),
-    imageInput: document.getElementById('image-input'),
-    imageDescription: document.getElementById('image-description'),
-    descCounter: document.getElementById('desc-counter'),
-    
-    // 文件上传
-    fileUploadArea: document.getElementById('file-upload-area'),
-    imagePreview: document.getElementById('image-preview'),
-    previewImg: document.getElementById('preview-img'),
-    removeImage: document.getElementById('remove-image'),
-    
-    // 状态面板
-    statusPanel: document.getElementById('status-panel'),
-    closeStatus: document.getElementById('close-status'),
-    currentTaskId: document.getElementById('current-task-id'),
-    currentStatus: document.getElementById('current-status'),
-    progressFill: document.getElementById('progress-fill'),
-    progressPercent: document.getElementById('progress-percent'),
-    estimatedTime: document.getElementById('estimated-time'),
-    statusMessage: document.getElementById('status-message'),
-    resultPanel: document.getElementById('result-panel'),
-    modelInfo: document.getElementById('model-info'),
-    
-    // 预览相关
-    previewBtn: document.getElementById('preview-btn'),
-    downloadBtn: document.getElementById('download-btn'),
-    
-    // 预览模态框
-    previewModal: document.getElementById('preview-modal'),
-    closePreview: document.getElementById('close-preview'),
-    modelPreviewImg: document.getElementById('model-preview-img'),
-    
-    // 加载覆盖层
-    loadingOverlay: document.getElementById('loading-overlay'),
-    
-    // 历史记录页面
-    historySection: document.getElementById('history-section'),
-    historyFilters: document.querySelectorAll('.history-filter'),
-    refreshHistoryBtn: document.getElementById('refresh-history'),
-    historyLoading: document.getElementById('history-loading'),
-    historyEmpty: document.getElementById('history-empty'),
-    historyList: document.getElementById('history-list'),
-    historyPagination: document.getElementById('history-pagination')
-};
+// DOM 元素 - 将在DOM加载完成后初始化
+let elements = {};
+
+// 初始化DOM元素
+function initializeElements() {
+    elements = {
+        // 导航和标签页
+        navLinks: document.querySelectorAll('.nav-link'),
+        tabButtons: document.querySelectorAll('.tab-btn'),
+        tabContents: document.querySelectorAll('.tab-content'),
+        
+        // 表单
+        textForm: document.getElementById('text-form'),
+        imageForm: document.getElementById('image-form'),
+        
+        // 输入元素
+        textInput: document.getElementById('text-input'),
+        textCounter: document.getElementById('text-counter'),
+        imageInput: document.getElementById('image-input'),
+        imageDescription: document.getElementById('image-description'),
+        descCounter: document.getElementById('desc-counter'),
+        
+        // 文件上传
+        fileUploadArea: document.getElementById('file-upload-area'),
+        imagePreview: document.getElementById('image-preview'),
+        previewImg: document.getElementById('preview-img'),
+        removeImage: document.getElementById('remove-image'),
+        
+        // 状态面板
+        statusPanel: document.getElementById('status-panel'),
+        closeStatus: document.getElementById('close-status'),
+        currentTaskId: document.getElementById('current-task-id'),
+        currentStatus: document.getElementById('current-status'),
+        progressFill: document.getElementById('progress-fill'),
+        progressPercent: document.getElementById('progress-percent'),
+        estimatedTime: document.getElementById('estimated-time'),
+        statusMessage: document.getElementById('status-message'),
+        resultPanel: document.getElementById('result-panel'),
+        modelInfo: document.getElementById('model-info'),
+        
+        // 预览相关
+        previewBtn: document.getElementById('preview-btn'),
+        downloadBtn: document.getElementById('download-btn'),
+        
+        // 预览模态框
+        previewModal: document.getElementById('preview-modal'),
+        closePreview: document.getElementById('close-preview'),
+        modelPreviewImg: document.getElementById('model-preview-img'),
+        
+        // 轮播相关元素
+        previewCarousel: document.getElementById('preview-carousel'),
+        carouselTrack: document.getElementById('carousel-track'),
+        carouselPrev: document.getElementById('carousel-prev'),
+        carouselNext: document.getElementById('carousel-next'),
+        carouselIndicators: document.getElementById('carousel-indicators'),
+        
+        // 加载覆盖层
+        loadingOverlay: document.getElementById('loading-overlay'),
+        
+        // 历史记录页面
+        historySection: document.getElementById('history-section'),
+        historyFilters: document.querySelectorAll('.history-filter'),
+        refreshHistoryBtn: document.getElementById('refresh-history'),
+        historyLoading: document.getElementById('history-loading'),
+        historyEmpty: document.getElementById('history-empty'),
+        historyList: document.getElementById('history-list'),
+        historyPagination: document.getElementById('history-pagination')
+    };
+}
 
 // 初始化应用
 document.addEventListener('DOMContentLoaded', function() {
@@ -124,6 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
+    initializeElements();
     setupNavigation();
     setupTabSwitching();
     setupFormHandlers();
@@ -166,25 +179,25 @@ function handlePageSwitch(page) {
     
     if (page === 'home') {
         // 显示首页内容
-        heroSection.style.display = 'block';
-        tabsSection.style.display = 'block';
+        if (heroSection) heroSection.style.display = 'block';
+        if (tabsSection) tabsSection.style.display = 'block';
         tabContents.forEach(content => content.style.display = 'block');
-        elements.historySection.style.display = 'none';
+        if (elements.historySection) elements.historySection.style.display = 'none';
         if (adminSection) adminSection.style.display = 'none';
     } else if (page === 'history') {
         // 显示历史记录页面
-        heroSection.style.display = 'none';
-        tabsSection.style.display = 'none';
+        if (heroSection) heroSection.style.display = 'none';
+        if (tabsSection) tabsSection.style.display = 'none';
         tabContents.forEach(content => content.style.display = 'none');
-        elements.historySection.style.display = 'block';
+        if (elements.historySection) elements.historySection.style.display = 'block';
         if (adminSection) adminSection.style.display = 'none';
         loadHistoryData();
     } else if (page === 'admin') {
         // 显示管理员页面
-        heroSection.style.display = 'none';
-        tabsSection.style.display = 'none';
+        if (heroSection) heroSection.style.display = 'none';
+        if (tabsSection) tabsSection.style.display = 'none';
         tabContents.forEach(content => content.style.display = 'none');
-        elements.historySection.style.display = 'none';
+        if (elements.historySection) elements.historySection.style.display = 'none';
         if (adminSection) {
             adminSection.style.display = 'block';
             loadAdminDashboard();
@@ -215,10 +228,10 @@ function switchTab(tabId) {
     
     // 如果切换到历史记录页面，显示历史记录区域并加载数据
     if (tabId === 'history') {
-        elements.historySection.style.display = 'block';
+        if (elements.historySection) elements.historySection.style.display = 'block';
         loadHistoryData();
     } else {
-        elements.historySection.style.display = 'none';
+        if (elements.historySection) elements.historySection.style.display = 'none';
     }
 }
 
@@ -641,8 +654,26 @@ async function showModelPreview() {
     try {
         showLoading(true);
         
-        const previewUrl = `/api/v1/ai3d/preview/${currentTaskId}?size=medium`;
-        elements.modelPreviewImg.src = previewUrl;
+        // 首先尝试获取任务状态，检查是否有多张预览图片
+        const statusResponse = await fetch(`/api/v1/models/status/${currentTaskId}`);
+        if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            
+            // 检查是否有多张预览图片
+            if (statusData.result && statusData.result.previewImages && statusData.result.previewImages.length > 1) {
+                // 显示轮播
+                showPreviewCarousel(statusData.result.previewImages);
+            } else {
+                // 显示单张图片（兼容旧版本）
+                const previewUrl = `/api/v1/ai3d/preview/${currentTaskId}?size=medium`;
+                showSinglePreview(previewUrl);
+            }
+        } else {
+            // 如果获取状态失败，回退到单张图片模式
+            const previewUrl = `/api/v1/ai3d/preview/${currentTaskId}?size=medium`;
+            showSinglePreview(previewUrl);
+        }
+        
         elements.previewModal.style.display = 'flex';
         
     } catch (error) {
@@ -655,6 +686,92 @@ async function showModelPreview() {
 
 function hidePreviewModal() {
     elements.previewModal.style.display = 'none';
+    // 清理轮播状态
+    currentCarouselIndex = 0;
+}
+
+// 显示单张预览图片
+function showSinglePreview(previewUrl) {
+    elements.modelPreviewImg.src = previewUrl;
+    elements.modelPreviewImg.style.display = 'block';
+    elements.previewCarousel.style.display = 'none';
+}
+
+// 显示多张预览图片轮播
+function showPreviewCarousel(previewImages) {
+    elements.modelPreviewImg.style.display = 'none';
+    elements.previewCarousel.style.display = 'block';
+    
+    // 清空现有内容
+    elements.carouselTrack.innerHTML = '';
+    elements.carouselIndicators.innerHTML = '';
+    
+    // 添加图片到轮播
+    previewImages.forEach((image, index) => {
+        // 创建轮播项
+        const slide = document.createElement('div');
+        slide.className = 'carousel-slide';
+        slide.innerHTML = `<img src="${image.url}" alt="预览图片 ${index + 1}" loading="lazy">`;
+        elements.carouselTrack.appendChild(slide);
+        
+        // 创建指示器
+        const indicator = document.createElement('div');
+        indicator.className = `carousel-indicator ${index === 0 ? 'active' : ''}`;
+        indicator.addEventListener('click', () => goToSlide(index));
+        elements.carouselIndicators.appendChild(indicator);
+    });
+    
+    // 初始化轮播状态
+    currentCarouselIndex = 0;
+    updateCarouselPosition();
+    
+    // 绑定轮播控制事件
+    bindCarouselEvents();
+}
+
+// 轮播状态变量
+let currentCarouselIndex = 0;
+let carouselEventsBound = false;
+
+// 绑定轮播控制事件
+function bindCarouselEvents() {
+    if (carouselEventsBound) return;
+    
+    elements.carouselPrev.addEventListener('click', () => {
+        goToSlide(currentCarouselIndex - 1);
+    });
+    
+    elements.carouselNext.addEventListener('click', () => {
+        goToSlide(currentCarouselIndex + 1);
+    });
+    
+    carouselEventsBound = true;
+}
+
+// 跳转到指定幻灯片
+function goToSlide(index) {
+    const slides = elements.carouselTrack.children;
+    const indicators = elements.carouselIndicators.children;
+    
+    if (slides.length === 0) return;
+    
+    // 处理边界情况
+    if (index < 0) index = slides.length - 1;
+    if (index >= slides.length) index = 0;
+    
+    currentCarouselIndex = index;
+    updateCarouselPosition();
+    
+    // 更新指示器状态
+    Array.from(indicators).forEach((indicator, i) => {
+        indicator.classList.toggle('active', i === index);
+    });
+}
+
+// 更新轮播位置
+function updateCarouselPosition() {
+    const translateX = -currentCarouselIndex * 100;
+    elements.carouselTrack.style.transform = `translateX(${translateX}%)`;
 }
 
 // changePreviewAngle函数已移除，因为不再需要角度切换
@@ -759,7 +876,7 @@ async function loadHistoryData() {
         
         // 构建请求参数
         const params = new URLSearchParams({
-            page: currentHistoryPage - 1, // 后端使用0开始的页码
+            page: currentHistoryPage, // 后端会自动转换为0开始的页码
             size: historyPageSize
         });
         
@@ -774,10 +891,15 @@ async function loadHistoryData() {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const data = await response.json();
+        const result = await response.json();
+        
+        // 检查响应格式
+        if (result.code !== 200) {
+            throw new Error(result.message || '请求失败');
+        }
         
         // 显示历史记录
-        displayHistoryData(data);
+        displayHistoryData(result.data);
         
     } catch (error) {
         console.error('加载历史记录失败:', error);
@@ -795,23 +917,39 @@ function displayHistoryData(data) {
     
     if (!items || items.length === 0) {
         showHistoryEmpty(true);
-        elements.historyPagination.style.display = 'none';
+        if (elements.historyPagination) elements.historyPagination.style.display = 'none';
         return;
     }
     
     showHistoryEmpty(false);
     
     // 清空现有列表
-    elements.historyList.innerHTML = '';
+    if (elements.historyList) elements.historyList.innerHTML = '';
     
     // 渲染历史记录项
-    items.forEach(item => {
-        const historyItem = createHistoryItem(item);
-        elements.historyList.appendChild(historyItem);
-    });
+    if (elements.historyList) {
+        items.forEach(item => {
+            const historyItem = createHistoryItem(item);
+            elements.historyList.appendChild(historyItem);
+        });
+    }
     
     // 更新分页 - 注意currentPage已经是1开始的页码
     updateHistoryPagination(totalPages, currentPage, totalElements);
+}
+
+// 将后端返回的相对路径转换为正确的URL格式
+function convertToWebUrl(path) {
+    if (!path) return '';
+    
+    // 移除开头的 ".\" 或 "./"
+    let cleanPath = path.replace(/^\.[\\/]/, '');
+    
+    // 将反斜杠转换为正斜杠
+    cleanPath = cleanPath.replace(/\\/g, '/');
+    
+    // 返回相对于网站根目录的路径
+    return '/' + cleanPath;
 }
 
 // 创建历史记录项元素
@@ -831,6 +969,10 @@ function createHistoryItem(item) {
         'FAILED': '失败'
     }[item.status] || item.status;
     
+    // 转换预览图URL和模型URL为正确的Web路径
+    const previewUrl = convertToWebUrl(item.previewUrl);
+    const modelUrl = convertToWebUrl(item.modelUrl);
+    
     div.innerHTML = `
         <div class="history-item-header">
             <div class="history-item-id">任务ID: ${item.taskId}</div>
@@ -839,41 +981,58 @@ function createHistoryItem(item) {
             </div>
         </div>
         <div class="history-item-content">
-            <div class="history-item-prompt">
-                <strong>提示词:</strong> ${item.prompt || '无'}
+            ${item.status === 'COMPLETED' && previewUrl ? `
+            <div class="history-item-preview">
+                <img src="${previewUrl}" 
+                     alt="模型预览图" 
+                     class="history-preview-image"
+                     onclick="previewHistoryModel('${item.taskId}')"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <div class="preview-error" style="display: none;">
+                    <i class="fas fa-image"></i>
+                    <span>预览图加载失败</span>
+                </div>
             </div>
-            <div class="history-item-details">
-                <div class="history-detail">
-                    <span class="detail-label">创建时间:</span>
-                    <span class="detail-value">${createdAt}</span>
+            ` : ''}
+            <div class="history-item-info">
+                <div class="history-item-prompt">
+                    <strong>提示词:</strong> ${item.prompt || '无'}
                 </div>
-                <div class="history-detail">
-                    <span class="detail-label">完成时间:</span>
-                    <span class="detail-value">${completedAt}</span>
+                <div class="history-item-details">
+                    <div class="history-detail">
+                        <span class="detail-label">创建时间:</span>
+                        <span class="detail-value">${createdAt}</span>
+                    </div>
+                    <div class="history-detail">
+                        <span class="detail-label">完成时间:</span>
+                        <span class="detail-value">${completedAt}</span>
+                    </div>
+                    ${item.duration ? `
+                    <div class="history-detail">
+                        <span class="detail-label">耗时:</span>
+                        <span class="detail-value">${formatTime(item.duration)}</span>
+                    </div>
+                    ` : ''}
+                    ${item.errorMessage ? `
+                    <div class="history-detail error">
+                        <span class="detail-label">错误信息:</span>
+                        <span class="detail-value">${item.errorMessage}</span>
+                    </div>
+                    ` : ''}
                 </div>
-                ${item.duration ? `
-                <div class="history-detail">
-                    <span class="detail-label">耗时:</span>
-                    <span class="detail-value">${formatTime(item.duration)}</span>
-                </div>
-                ` : ''}
-                ${item.errorMessage ? `
-                <div class="history-detail error">
-                    <span class="detail-label">错误信息:</span>
-                    <span class="detail-value">${item.errorMessage}</span>
-                </div>
-                ` : ''}
             </div>
         </div>
-        ${item.status === 'COMPLETED' && (item.modelUrl || item.previewUrl) ? `
+        ${item.status === 'COMPLETED' && (modelUrl || previewUrl) ? `
         <div class="history-item-actions">
-            ${item.previewUrl ? `
-            <button class="btn btn-secondary" onclick="previewHistoryModel('${item.previewUrl}')">
+            ${previewUrl ? `
+            <button class="btn btn-secondary" onclick="previewHistoryModel('${item.taskId}')">
+                <i class="fas fa-eye"></i>
                 预览模型
             </button>
             ` : ''}
-            ${item.modelUrl ? `
-            <button class="btn btn-primary" onclick="downloadHistoryModel('${item.modelUrl}', '${item.taskId}')">
+            ${modelUrl ? `
+            <button class="btn btn-primary" onclick="downloadHistoryModel('${modelUrl}', '${item.taskId}')">
+                <i class="fas fa-download"></i>
                 下载模型
             </button>
             ` : ''}
@@ -886,6 +1045,8 @@ function createHistoryItem(item) {
 
 // 更新历史记录分页
 function updateHistoryPagination(totalPages, currentPage, totalElements) {
+    if (!elements.historyPagination) return;
+    
     if (totalPages <= 1) {
         elements.historyPagination.style.display = 'none';
         return;
@@ -918,20 +1079,49 @@ function goToHistoryPage(page) {
 
 // 显示/隐藏历史记录加载状态
 function showHistoryLoading(show) {
-    elements.historyLoading.style.display = show ? 'block' : 'none';
-    elements.historyList.style.display = show ? 'none' : 'block';
+    if (elements.historyLoading) elements.historyLoading.style.display = show ? 'block' : 'none';
+    if (elements.historyList) elements.historyList.style.display = show ? 'none' : 'block';
 }
 
 // 显示/隐藏历史记录空状态
 function showHistoryEmpty(show) {
-    elements.historyEmpty.style.display = show ? 'block' : 'none';
-    elements.historyList.style.display = show ? 'none' : 'block';
+    if (elements.historyEmpty) elements.historyEmpty.style.display = show ? 'block' : 'none';
+    if (elements.historyList) elements.historyList.style.display = show ? 'none' : 'block';
 }
 
 // 预览历史记录中的模型
-function previewHistoryModel(previewUrl) {
-    elements.modelPreviewImg.src = previewUrl;
-    elements.previewModal.style.display = 'flex';
+async function previewHistoryModel(taskId) {
+    try {
+        showLoading(true);
+        
+        // 首先尝试获取任务状态，检查是否有多张预览图片
+        const statusResponse = await fetch(`/api/v1/models/status/${taskId}`);
+        if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            
+            // 检查是否有多张预览图片
+            if (statusData.result && statusData.result.previewImages && statusData.result.previewImages.length > 1) {
+                // 显示轮播
+                showPreviewCarousel(statusData.result.previewImages);
+            } else {
+                // 显示单张图片（兼容旧版本）
+                const previewUrl = `/api/v1/ai3d/preview/${taskId}?size=medium`;
+                showSinglePreview(previewUrl);
+            }
+        } else {
+            // 如果获取状态失败，回退到单张图片模式
+            const previewUrl = `/api/v1/ai3d/preview/${taskId}?size=medium`;
+            showSinglePreview(previewUrl);
+        }
+        
+        if (elements.previewModal) elements.previewModal.style.display = 'flex';
+        
+    } catch (error) {
+        console.error('历史预览加载失败:', error);
+        showError('历史预览加载失败');
+    } finally {
+        showLoading(false);
+    }
 }
 
 // 下载历史记录中的模型
